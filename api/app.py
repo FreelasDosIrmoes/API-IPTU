@@ -8,7 +8,7 @@ app = Flask(__name__)
 def handle_exception(e : HTTPException):
     return make_response(json.dumps({
             "code": e.code,
-            "description": e.name,
+            "description": e.description,
         }), e.code)
                 
 
@@ -19,9 +19,15 @@ def hello_world():
 @app.route("/upload", methods=['POST'])
 def upload():
     if request.method == "POST":
-        f = request.files['file']
+        f = handling_get_file('file', request)
         f.save(f'../storage/{f.filename}.txt')
         return Response(status=201)
     raise MethodNotAllowed()
 
-
+def handling_get_file(filename : str, request : Request):
+    f = None
+    try:
+        f = request.files[filename]
+        return f
+    except Exception as e:
+        raise BadRequest('file with name "file" is required')
