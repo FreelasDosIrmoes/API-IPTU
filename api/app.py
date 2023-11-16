@@ -1,14 +1,16 @@
 from flask import Flask
 from flask import json
-from api.exception.exception import ExceptionResponse, BadRequest, NotFound
+from werkzeug.exceptions import *
+
 
 app = Flask(__name__)
 
-@app.errorhandler(ExceptionResponse)
+@app.errorhandler(HTTPException)
 def handle_exception(e):
+    print(e)
     return json.dumps({
         "code": e.code,
-        "description": e.message,
+        "description": "teste",
         })
 
 @app.route("/")
