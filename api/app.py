@@ -1,4 +1,4 @@
-from flask import Flask, json, request, Response
+from flask import *
 from werkzeug.exceptions import *
 
 
@@ -6,11 +6,11 @@ app = Flask(__name__)
 
 @app.errorhandler(HTTPException)
 def handle_exception(e : HTTPException):
-    print(e)
-    return json.dumps({
-        "code": e.code,
-        "description": e.name,
-        })
+    return make_response(json.dumps({
+            "code": e.code,
+            "description": e.name,
+        }), e.code)
+                
 
 @app.route("/")
 def hello_world():
