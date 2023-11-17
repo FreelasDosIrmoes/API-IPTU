@@ -29,6 +29,14 @@ class Automation:
       code_input = self.driver.find_element(By.XPATH, xpath_code_label)
         
       code_input.send_keys(code)
+
+  def click_on_buttom(self):
+      # clickar no botão "Consultar"
+      verification_buttom_label = check_exists_by_xpath('//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button', self.driver)
+      if verification_buttom_label:
+          buttom_consultar = self.driver.find_element(By.XPATH, '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button')
+
+          buttom_consultar.click()
       
 
 robot = Automation()
