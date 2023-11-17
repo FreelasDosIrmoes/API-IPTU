@@ -57,3 +57,4 @@ instance/
 .webassets-cache
 
 .idea
+.env
