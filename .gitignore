@@ -55,3 +55,6 @@ logs/
 # Flask
 instance/
 .webassets-cache
+
+.idea
+.env
