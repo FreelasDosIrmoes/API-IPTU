@@ -1,7 +1,8 @@
 from flask import *
-from api.utils import *
 
 from werkzeug.exceptions import *
+from api.service import *
+
 
 app = Flask(__name__)
 
@@ -16,9 +17,11 @@ def handle_exception(e: HTTPException):
     )
 
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+@app.route("/<int:iptu_code>")
+def hello_world(iptu_code : int):
+    return make_response({
+        "iptu_code": iptu_code
+    })
 
 
 @app.route("/upload", methods=['POST'])
