@@ -23,12 +23,13 @@ class Automation:
      
   def put_info_web(self):
     #input das infos no site (inscrição e o dropwdown)
-    xpath_code_label = '//*[@id="mat-input-0"]'
-    code_input = self.driver.find_element(By.XPATH, xpath_code_label)
-      
-    code_input.send_keys('51502046')
-    
+    verification_label = check_exists_by_xpath('//*[@id="mat-input-0"]', self.driver)
+    if verification_label:
+      xpath_code_label = '//*[@id="mat-input-0"]'
+      code_input = self.driver.find_element(By.XPATH, xpath_code_label)
         
+      code_input.send_keys('51502046')
+      
 
 robot = Automation()
 robot.InitBrowser()
