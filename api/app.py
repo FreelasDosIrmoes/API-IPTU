@@ -1,7 +1,7 @@
 from flask import *
 
 from werkzeug.exceptions import *
-from api.service import *
+from service import *
 
 
 app = Flask(__name__)
