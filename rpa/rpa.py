@@ -6,7 +6,10 @@ from selenium.common.exceptions import NoSuchElementException
 from rpa_helper import check_exists_by_xpath
 
 class Automation:
-  def InitBrowser(self):
+  def __init__(self):
+    self.url = "https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu" 
+  
+  def InitBrowser(self):     
     #configs
     service = Service()
     options = webdriver.ChromeOptions()
@@ -15,10 +18,8 @@ class Automation:
     options.add_argument('--log-level=3')
 
     #login no site
-    url = "https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu"
-
     self.driver = webdriver.Chrome(service = service, options = options)
-    self.driver.get(url)
+    self.driver.get(self.url)
      
   def put_info_web(self):
     #input das infos no site (inscrição e o dropwdown)
