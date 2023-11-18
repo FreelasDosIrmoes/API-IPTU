@@ -1,5 +1,8 @@
+selenium
+anticaptchaofficial
 flask
 Flask-SQLAlchemy
 psycopg2-binary
 flask_migrate
 flask_script
+
