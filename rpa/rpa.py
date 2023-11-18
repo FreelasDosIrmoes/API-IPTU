@@ -55,15 +55,11 @@ class Automation:
        
         # preencher o campo que do captcha para a liberação
         # g-recaptcha-response 
-        sleep(3)
-        print(g_response)
-        # self.driver.execute_script(f"document.getElementById('g-recaptcha-response').innerHTML = '{g_response}'")
+
         self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
         self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
     else:
         print ("task finished with error "+ solver.error_code)
-      
-from time import sleep
 
 robot = Automation()
 robot.InitBrowser()
