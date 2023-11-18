@@ -1,55 +1,58 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
-
-from rpa_helper import check_exists_by_xpath
-from time import sleep
+from dotenv import load_dotenv
+import os
 
 from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+
+from rpa_helper import check_exists_by_xpath
+from variables import *
+
+load_dotenv()
+
+API_KEY = os.getenv('API_KEY')
+WEB_KEY = os.getenv('WEB_KEY')
+
+
 class Automation:
   def __init__(self):
-    self.url = "https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu" 
-  
-  def InitBrowser(self):     
-    #configs
-    service = Service()
-    options = webdriver.ChromeOptions()
-    options.add_experimental_option("detach", True)   # tirar dps
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    options.add_argument('--log-level=3')
-    options.add_argument('--disable-blink-features=AutomationControlled')
+    self.url = url_site 
+    
+    self.service = Service()
+    self.options = webdriver.ChromeOptions()
+    self.options.add_experimental_option("detach", True)   # tirar dps
+    self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    self.options.add_argument('--log-level=3')
+    self.options.add_argument('--disable-blink-features=AutomationControlled')
 
+  def InitBrowser(self):
     #login no site
-    self.driver = webdriver.Chrome(service = service, options = options)
+    self.driver = webdriver.Chrome(service = self.service, options = self.options)
     self.driver.get(self.url)
      
   def put_info_web(self, code):
     #input das infos no site (inscrição e o dropwdown)
-    verification_label = check_exists_by_xpath('//*[@id="mat-input-0"]', self.driver)
-    if verification_label:
-      xpath_code_label = '//*[@id="mat-input-0"]'
+    if check_exists_by_xpath(xpath_code_label, self.driver):
       code_input = self.driver.find_element(By.XPATH, xpath_code_label)
       
       code_input.clear()
       code_input.send_keys(code)
 
   def click_on_buttom(self):
-      # clickar no botão "Consultar"
-      verification_buttom_label = check_exists_by_xpath('//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button', self.driver)
-      if verification_buttom_label:
-          buttom_consultar = self.driver.find_element(By.XPATH, '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button')
-
-          buttom_consultar.click()
+    # clickar no botão "Consultar"
+    if check_exists_by_xpath(xpath_buttom_submit, self.driver):
+      buttom_consultar = self.driver.find_element(By.XPATH, xpath_buttom_submit) 
+      buttom_consultar.click()
   
   def passed_on_captcha(self):
   
     solver = recaptchaV2EnterpriseProxyless()
     solver.set_verbose(1)
-    solver.set_key("3f6496391630e35dff64c09607c4b729")
-    solver.set_website_url("https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu")
-    solver.set_website_key("6LcppFcmAAAAANtBOCHWWX9Z34UrWtunr7GsqQyt")
+    solver.set_key(API_KEY)
+    solver.set_website_url(url_site)
+    solver.set_website_key(WEB_KEY)
 
     g_response = solver.solve_and_return_solution()
     if g_response != 0:
@@ -61,10 +64,14 @@ class Automation:
         self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
     else:
         print ("task finished with error "+ solver.error_code)
+    
+  def process_flux(self, code):
+    # fluxo do processo de automação
+    self.InitBrowser()
+    self.put_info_web(code)
+    self.passed_on_captcha()
+    self.click_on_buttom()
 
 
 robot = Automation()
-robot.InitBrowser()
-robot.put_info_web('51502046')
-robot.passed_on_captcha()
-robot.click_on_buttom()
+robot.process_flux('51502046')
