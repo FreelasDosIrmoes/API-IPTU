@@ -31,7 +31,8 @@ class Automation:
     if verification_label:
       xpath_code_label = '//*[@id="mat-input-0"]'
       code_input = self.driver.find_element(By.XPATH, xpath_code_label)
-        
+      
+      code_input.clear()
       code_input.send_keys(code)
 
   def click_on_buttom(self):
@@ -61,8 +62,12 @@ class Automation:
     else:
         print ("task finished with error "+ solver.error_code)
 
+  def extract_data(self):
+    pass
+
 robot = Automation()
 robot.InitBrowser()
 robot.put_info_web('51502046')
 robot.passed_on_captcha()
 robot.click_on_buttom()
+robot.extract_data()
