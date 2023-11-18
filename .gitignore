@@ -56,4 +56,7 @@ logs/
 instance/
 .webassets-cache
 
+
+.idea
+
 .env
