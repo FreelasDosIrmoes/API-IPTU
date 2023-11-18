@@ -19,6 +19,7 @@ class Automation:
     options.add_experimental_option("detach", True)   # tirar dps
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_argument('--log-level=3')
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     #login no site
     self.driver = webdriver.Chrome(service = service, options = options)
@@ -55,8 +56,10 @@ class Automation:
         # preencher o campo que do captcha para a liberação
         # g-recaptcha-response 
         sleep(3)
-        self.driver.execute_script(f"document.getElementById('g-recaptcha-response').innerHTML = '{g_response}'")
-                
+        print(g_response)
+        # self.driver.execute_script(f"document.getElementById('g-recaptcha-response').innerHTML = '{g_response}'")
+        self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
+        self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
     else:
         print ("task finished with error "+ solver.error_code)
       
