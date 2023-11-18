@@ -7,8 +7,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 
-from rpa_helper import check_exists_by_xpath
-from variables import *
+from rpa.rpa_helper import check_exists_by_xpath
+from rpa.variables import *
 
 load_dotenv()
 
@@ -72,6 +72,3 @@ class Automation:
     self.passed_on_captcha()
     self.click_on_buttom()
 
-
-robot = Automation()
-robot.process_flux('51502046')
