@@ -4,6 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 from rpa_helper import check_exists_by_xpath
+from time import sleep
+
+from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
 class Automation:
   def __init__(self):
@@ -37,8 +40,30 @@ class Automation:
           buttom_consultar = self.driver.find_element(By.XPATH, '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button')
 
           buttom_consultar.click()
+  
+  def passed_on_captcha(self):
+  
+    solver = recaptchaV2EnterpriseProxyless()
+    solver.set_verbose(1)
+    solver.set_key("3f6496391630e35dff64c09607c4b729")
+    solver.set_website_url("https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu")
+    solver.set_website_key("6LcppFcmAAAAANtBOCHWWX9Z34UrWtunr7GsqQyt")
+
+    g_response = solver.solve_and_return_solution()
+    if g_response != 0:
+       
+        # preencher o campo que do captcha para a liberação
+        # g-recaptcha-response 
+        sleep(3)
+        self.driver.execute_script(f"document.getElementById('g-recaptcha-response').innerHTML = '{g_response}'")
+                
+    else:
+        print ("task finished with error "+ solver.error_code)
       
+from time import sleep
 
 robot = Automation()
 robot.InitBrowser()
 robot.put_info_web('51502046')
+robot.passed_on_captcha()
+robot.click_on_buttom()

@@ -9,7 +9,3 @@ def check_exists_by_xpath(xpath, driver):
   except NoSuchElementException:
       return False
   return True
-
-
-#TODO VER A QUESTÃO DE RECEBER O DRIVER (OU SOLUÇÃO POO)
-
