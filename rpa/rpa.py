@@ -62,12 +62,9 @@ class Automation:
     else:
         print ("task finished with error "+ solver.error_code)
 
-  def extract_data(self):
-    pass
 
 robot = Automation()
 robot.InitBrowser()
 robot.put_info_web('51502046')
 robot.passed_on_captcha()
 robot.click_on_buttom()
-robot.extract_data()
