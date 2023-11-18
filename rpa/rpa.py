@@ -27,7 +27,14 @@ class Automation:
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
 
-  def InitBrowser(self):
+  def process_flux(self, code):
+    # fluxo do processo de automação
+    self.init_browser()
+    self.put_info_web(code)
+    self.passed_on_captcha()
+    self.click_on_buttom()
+  
+  def init_browser(self):
     #login no site
     self.driver = webdriver.Chrome(service = self.service, options = self.options)
     self.driver.get(self.url)
@@ -65,10 +72,4 @@ class Automation:
     else:
         print ("task finished with error "+ solver.error_code)
     
-  def process_flux(self, code):
-    # fluxo do processo de automação
-    self.InitBrowser()
-    self.put_info_web(code)
-    self.passed_on_captcha()
-    self.click_on_buttom()
 
