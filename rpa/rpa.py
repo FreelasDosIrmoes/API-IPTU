@@ -92,20 +92,21 @@ class Automation:
     row = 1
     column = 1
 
-    list = []
+    table_data = []
 
     while check_exists_by_xpath(get_xpath(row, column), self.driver):
-      list_aux = []
+      row_data = []
+
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
+        cell_xpath = get_xpath(row, column)
+        label_column = self.driver.find_element(By.XPATH, cell_xpath).text
+        row_data.append(label_column)
 
-        label_column = self.driver.find_element(By.XPATH, get_xpath(row, column))
-        list_aux.append(label_column)
+        column += 1
 
-        column +=1
-      list.append(list_aux)
-      list_aux.clear()
+      table_data.append(row_data)
       column = 1
+      row += 1
 
+    print(table_data)
 
-      row +=1
-    print(list)
