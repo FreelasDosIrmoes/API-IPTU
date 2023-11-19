@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 
-from rpa.rpa_helper import check_exists_by_xpath
+from rpa.rpa_helper import *
 from rpa.variables import *
 
 load_dotenv()
@@ -29,12 +29,13 @@ class Automation:
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
 
-  def process_flux(self, code):
+  def process_flux(self, code, owner):
     # fluxo do processo de automação
     self.init_browser()
     self.put_info_web(code)
     self.passed_on_captcha()
     self.click_on_buttom()
+    self.extract_data_web(owner)
 
   def init_browser(self):
     #login no site
@@ -56,7 +57,7 @@ class Automation:
       buttom_consultar.click()
 
   def passed_on_captcha(self):
-
+    # passar do recaptch
     solver = recaptchaV2EnterpriseProxyless()
     solver.set_verbose(1)
     solver.set_key(API_KEY)
@@ -74,32 +75,31 @@ class Automation:
     else:
         print ("task finished with error "+ solver.error_code)
 
-  def extract_dados_web(self):
+  def extract_data_web(self, owner):
+    # extrair os dados do site 
     sleep(2)
 
-    if check_exists_by_xpath(xpath_label_name, self.driver):
-      label_name = self.driver.find_element(By.XPATH, xpath_label_name)
+    if not verify_owner(owner, xpath_label_name, self.driver):
+      return
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
-
-
-    def get_xpath(count, cell_number):
-      return (f'//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card'
-              f'/mat-card-content/shared-responsive-selector/res-desktop/div/mat-table/mat-row[{count}]/m'
-              f'at-cell[{cell_number}]')
-
+   
     row = 1
     column = 1
 
     table_data = []
-
+    
     while check_exists_by_xpath(get_xpath(row, column), self.driver):
       row_data = []
 
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
         cell_xpath = get_xpath(row, column)
         label_column = self.driver.find_element(By.XPATH, cell_xpath).text
+        
+        if ('Imprimir') in label_column:
+          break
+        
         row_data.append(label_column)
 
         column += 1
@@ -109,4 +109,3 @@ class Automation:
       row += 1
 
     print(table_data)
-
