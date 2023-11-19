@@ -1,5 +1,7 @@
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from time import sleep
 
 from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
@@ -71,5 +73,14 @@ class Automation:
         self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
     else:
         print ("task finished with error "+ solver.error_code)
+  
+  def extract_dados_web(self):
+    sleep(2)
+  
+    if check_exists_by_xpath(xpath_label_name, self.driver):
+      label_name = self.driver.find_element(By.XPATH, xpath_label_name)
+      
+    if check_exists_by_xpath(xpath_label_endereco, self.driver):
+      label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
     
-
+    
