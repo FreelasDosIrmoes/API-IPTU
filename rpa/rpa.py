@@ -84,3 +84,25 @@ class Automation:
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
     
     
+    def get_xpath(count, cell_number):
+      return f'//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/shared-responsive-selector/res-desktop/div/mat-table/mat-row[{count}]/mat-cell[{cell_number}]'
+
+    row, column = 1
+
+    list = []
+    
+    while check_exists_by_xpath(get_xpath(row,column),self.driver):
+      list_aux = []
+      while check_exists_by_xpath(get_xpath(row,column),self.driver):
+        
+        label_column = self.driver.find_element(By.XPATH, get_xpath(row,column))
+        list_aux.append(label_column)
+        
+        column +=1
+    
+      column = 1
+      
+      
+      row +=1
+      path = get_xpath(row, 1)
+    
