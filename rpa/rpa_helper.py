@@ -20,4 +20,20 @@ def verify_owner(owner, xpath_owner, driver):
       if owner == name:
         return True
     return False
-          
+
+def build_dict(dict, col, data):
+    if col == 1:
+        dict['ano'] = data   
+    elif col == 2:
+        dict['cota'] = data
+    elif col == 3:
+        dict['valor'] = data  
+    elif col == 4:
+        dict['multa'] = data  
+    elif col == 5:
+        dict['juros'] = data    
+    elif col == 6:
+        dict['outros'] = data
+    elif col == 7:
+        dict['valortotal'] = data
+    

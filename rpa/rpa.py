@@ -91,7 +91,7 @@ class Automation:
     table_data = []
     
     while check_exists_by_xpath(get_xpath(row, column), self.driver):
-      row_data = []
+      dict = {}
 
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
         cell_xpath = get_xpath(row, column)
@@ -100,11 +100,11 @@ class Automation:
         if ('Imprimir') in label_column:
           break
         
-        row_data.append(label_column)
+        build_dict(dict,column, label_column)
 
         column += 1
 
-      table_data.append(row_data)
+      table_data.append(dict)
       column = 1
       row += 1
 
