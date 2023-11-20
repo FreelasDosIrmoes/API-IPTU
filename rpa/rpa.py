@@ -78,6 +78,10 @@ class Automation:
   def extract_data_web(self, owner):
     # extrair os dados do site 
     sleep(2)
+    
+    if check_exists_by_xpath(expand_table, self.driver):
+      label_click = self.driver.find_element(By.XPATH, expand_table)
+      label_click.click()  
 
     if not verify_owner(owner, xpath_label_name, self.driver):
       return
