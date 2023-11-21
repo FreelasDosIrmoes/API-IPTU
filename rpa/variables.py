@@ -14,3 +14,5 @@ xpath_qtd_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-
 xpath_next_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/mat-paginator/div/div/div[2]/button[2]'
 
 url_site = 'https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu'
+
+button_confirmation_pdf = '//button/span[contains(text(), "Confirmar")]'

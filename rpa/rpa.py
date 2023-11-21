@@ -30,6 +30,12 @@ class Automation:
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
+    self.options.add_experimental_option("prefs", {
+      "download.default_directory": "/home/arthur/Downloads/",
+      "download.prompt_for_download": False,
+      "download.directory_upgrade": True,
+      "safebrowsing.enabled": True
+    })
 
   def process_flux_current_year(self, code, owner):
     # fluxo do processo de automação do ano atual
@@ -106,19 +112,18 @@ class Automation:
     column = 1
 
     table_data = []
-    
     qtd_page = self.returning_qtd_page()
     
     if qtd_page <= 10:
-      # caso com menos ou igual a 10 débitos na página
-      while check_exists_by_xpath(get_xpath(row, column), self.driver):
+      while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
         dict = {}
 
-        while check_exists_by_xpath(get_xpath(row, column), self.driver):
-          cell_xpath = get_xpath(row, column)
+        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
+          cell_xpath = get_xpath_table(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
-          if ('Imprimir') in label_column:
+          if ('Gerar PDF') in label_column:
+            process_pdf(dict, self.driver, row, column)
             break
           
           build_dict(dict,column, label_column)
@@ -136,11 +141,11 @@ class Automation:
       num = ceil(qtd_page / 10)
       
       for i in range(num):
-        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
           dict = {}
 
-          while check_exists_by_xpath(get_xpath(row, column), self.driver):
-            cell_xpath = get_xpath(row, column)
+          while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
+            cell_xpath = get_xpath_table(row, column)
             label_column = self.driver.find_element(By.XPATH, cell_xpath).text
             
             if ('Imprimir') in label_column:
