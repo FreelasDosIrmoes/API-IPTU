@@ -124,7 +124,7 @@ class Automation:
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
           if ('Gerar PDF') in label_column:
-            process_pdf(dict, self.driver, row, column)
+            process_pdf(dict, self.driver, row)
             break
           
           build_dict(dict,column, label_column)

@@ -2,10 +2,13 @@ import os
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from rpa.variables import button_confirmation_pdf
 from time import sleep
+from dotenv import load_dotenv
+load_dotenv()
+
+PATH_DOWNLOAD = os.getenv('PASTA_DOWNLOAD')
+
 
 def check_exists_by_xpath(xpath, driver):
   try:
@@ -45,8 +48,9 @@ def build_dict(dict, col, data):
 
 
 
-def process_pdf(data, driver, row, column):
-    button_download_pdf = f'//mat-table/mat-row[{row}]/mat-cell[8]/button/span[contains(text(), " Gerar PDF ")]'
+def process_pdf(data, driver, row):
+    remove_all_relatorio_dar()
+    button_download_pdf = get_xpath_button_download(row)
     if check_exists_by_xpath(button_download_pdf, driver):
         sleep(1.5)
         driver.find_element(By.XPATH, button_download_pdf).click()
@@ -56,3 +60,13 @@ def process_pdf(data, driver, row, column):
         with open("/home/arthur/Downloads/RelatorioDAR.pdf", "rb") as file:
             data['pdf_byte'] = file.read()
         os.remove("/home/arthur/Downloads/RelatorioDAR.pdf")
+
+
+def remove_all_relatorio_dar():
+    for file in os.listdir(PATH_DOWNLOAD):
+        if "RelatorioDar" in file:
+            os.remove(PATH_DOWNLOAD+file)
+
+
+def get_xpath_button_download(row):
+    return f'//mat-table/mat-row[{row}]/mat-cell[8]/button/span[contains(text(), " Gerar PDF ")]'
