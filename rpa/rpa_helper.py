@@ -40,8 +40,7 @@ def build_dict(dict, col, data):
     elif col == 6:
         dict['outros'] = data
     elif col == 7:
-      dict['total'] = data
-
+        dict['total'] = data
 
 
 def process_pdf(data, driver, row):
@@ -52,7 +51,7 @@ def process_pdf(data, driver, row):
         driver.find_element(By.XPATH, button_download_pdf).click()
         if check_exists_by_xpath(button_confirmation_pdf, driver):
             driver.find_element(By.XPATH, button_confirmation_pdf).click()
-        sleep(5)
+        verify_download()
         with open(PATH_DOWNLOAD + "RelatorioDAR.pdf", "rb") as file:
             data['pdf_byte'] = file.read()
         os.remove(PATH_DOWNLOAD + "RelatorioDAR.pdf")
@@ -66,3 +65,19 @@ def remove_all_relatorio_dar():
 
 def get_xpath_button_download(row):
     return f'//mat-table/mat-row[{row}]/mat-cell[8]/button/span[contains(text(), " Gerar PDF ")]'
+
+def verify_download():
+    while True:
+        path_complete = os.path.join(PATH_DOWNLOAD, "RelatorioDAR.pdf")
+
+        if os.path.isfile(path_complete):
+            sleep(0.5)
+            return
+
+
+def verify_data(table_data: list[dict]):
+    for data in table_data:
+        if "pdf_byte" not in data.keys():
+            raise Exception("o dicionário", data, "não possui o campo 'pdf_byte'.")
+        if data['pdf_byte'] == b'':
+            raise Exception("o dicionário", data, "possui o campo 'pdf_byte' vazio.")

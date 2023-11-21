@@ -14,8 +14,8 @@ class Automation:
 
     self.service = Service()
     self.options = webdriver.ChromeOptions()
-    # self.options.add_experimental_option("detach", True)   # tirar dps
-    self.options.add_argument("--headless=new")
+    self.options.add_experimental_option("detach", True)   # tirar dps
+    # self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
@@ -123,8 +123,7 @@ class Automation:
         column = 1
         row += 1
         
-      print(table_data)
-        
+
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
@@ -136,8 +135,9 @@ class Automation:
           while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
             cell_xpath = get_xpath_table(row, column)
             label_column = self.driver.find_element(By.XPATH, cell_xpath).text
-            
-            if ('Imprimir') in label_column:
+
+            if ('Gerar PDF') in label_column:
+              process_pdf(dict, self.driver, row)
               break
             
             build_dict(dict,column, label_column)
@@ -149,8 +149,9 @@ class Automation:
           row += 1
         
         self.click_next_page()
-        
-      print(table_data)
+
+    verify_data(table_data)
+    return table_data
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
