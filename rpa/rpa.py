@@ -1,23 +1,11 @@
-import os
-
-from dotenv import load_dotenv
-from time import sleep
-
 from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-
 from rpa.rpa_helper import *
 from rpa.variables import *
 
 from math import ceil
-
-load_dotenv()
-
-API_KEY = os.getenv('API_KEY')
-WEB_KEY = os.getenv('WEB_KEY')
 
 
 class Automation:
@@ -32,9 +20,9 @@ class Automation:
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
     self.options.add_experimental_option("prefs", {
-      "download.default_directory": "/home/arthur/Downloads/",
+      "download.default_directory": PATH_DOWNLOAD,
       "download.prompt_for_download": False,
-      "download.directory_upgrade": True,
+      "download.directory_upgrade": False,
       "safebrowsing.enabled": True
     })
 

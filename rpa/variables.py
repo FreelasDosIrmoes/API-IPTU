@@ -1,3 +1,13 @@
+import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+API_KEY = os.getenv('API_KEY')
+WEB_KEY = os.getenv('WEB_KEY')
+PATH_DOWNLOAD = os.getenv('PASTA_DOWNLOAD')
+
 xpath_code_label = '//*[@id="mat-input-0"]'
 xpath_buttom_submit = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-footer/button'
 

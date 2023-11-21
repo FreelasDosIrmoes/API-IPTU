@@ -2,12 +2,8 @@ import os
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from rpa.variables import button_confirmation_pdf
+from rpa.variables import *
 from time import sleep
-from dotenv import load_dotenv
-load_dotenv()
-
-PATH_DOWNLOAD = os.getenv('PASTA_DOWNLOAD')
 
 
 def check_exists_by_xpath(xpath, driver):
@@ -57,14 +53,14 @@ def process_pdf(data, driver, row):
         if check_exists_by_xpath(button_confirmation_pdf, driver):
             driver.find_element(By.XPATH, button_confirmation_pdf).click()
         sleep(5)
-        with open("/home/arthur/Downloads/RelatorioDAR.pdf", "rb") as file:
+        with open(PATH_DOWNLOAD + "RelatorioDAR.pdf", "rb") as file:
             data['pdf_byte'] = file.read()
-        os.remove("/home/arthur/Downloads/RelatorioDAR.pdf")
+        os.remove(PATH_DOWNLOAD + "RelatorioDAR.pdf")
 
 
 def remove_all_relatorio_dar():
     for file in os.listdir(PATH_DOWNLOAD):
-        if "RelatorioDar" in file:
+        if "RelatorioDAR" in file:
             os.remove(PATH_DOWNLOAD+file)
 
 
