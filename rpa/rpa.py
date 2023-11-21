@@ -66,10 +66,7 @@ class Automation:
       buttom_consultar = self.driver.find_element(By.XPATH, xpath_buttom_submit)
       buttom_consultar.click()
       sleep(1)  # ver se tira (desperdício)
-      if check_exists_by_xpath(xpath_error_msg, self.driver):
-        print('ERRO DE AVISO')
-        return False       # NÃO EXISTE DÉBITOS DE ANOS ANTERIORES
-      return True
+      return not check_exists_by_xpath(xpath_error_msg, self.driver)
     return False
 
   def passed_on_captcha(self):
@@ -187,4 +184,4 @@ class Automation:
     if check_exists_by_xpath(xpath_next_page, self.driver):
       label_next_page = self.driver.find_element(By.XPATH, xpath_next_page)
       label_next_page.click()
-        
+     
