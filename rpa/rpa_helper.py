@@ -2,6 +2,8 @@ import os
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from rpa.variables import button_confirmation_pdf
 from time import sleep
 
@@ -44,8 +46,9 @@ def build_dict(dict, col, data):
 
 
 def process_pdf(data, driver, row, column):
-    button_download_pdf = get_xpath_table(row, column) + '/button/span[contains(text(), " Gerar PDF ")]'
+    button_download_pdf = f'//mat-table/mat-row[{row}]/mat-cell[8]/button/span[contains(text(), " Gerar PDF ")]'
     if check_exists_by_xpath(button_download_pdf, driver):
+        sleep(1.5)
         driver.find_element(By.XPATH, button_download_pdf).click()
         if check_exists_by_xpath(button_confirmation_pdf, driver):
             driver.find_element(By.XPATH, button_confirmation_pdf).click()
