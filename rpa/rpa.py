@@ -12,6 +12,8 @@ from selenium.webdriver.common.by import By
 from rpa.rpa_helper import *
 from rpa.variables import *
 
+from math import ceil
+
 load_dotenv()
 
 API_KEY = os.getenv('API_KEY')
@@ -108,25 +110,56 @@ class Automation:
 
     table_data = []
     
-    while check_exists_by_xpath(get_xpath(row, column), self.driver):
-      dict = {}
-
+    qtd_page = self.returning_qtd_page()
+    
+    if qtd_page <= 10:
+      # caso com menos ou igual a 10 débitos na página
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
-        cell_xpath = get_xpath(row, column)
-        label_column = self.driver.find_element(By.XPATH, cell_xpath).text
+        dict = {}
+
+        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+          cell_xpath = get_xpath(row, column)
+          label_column = self.driver.find_element(By.XPATH, cell_xpath).text
+          
+          if ('Imprimir') in label_column:
+            break
+          
+          build_dict(dict,column, label_column)
+
+          column += 1
+
+        table_data.append(dict)
+        column = 1
+        row += 1
         
-        if ('Imprimir') in label_column:
-          break
+      print(table_data)
         
-        build_dict(dict,column, label_column)
+    else:
+      # caso com mais de 10 débitos na página
+      num = ceil(qtd_page / 10)
+      
+      for i in range(num):
+        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+          dict = {}
 
-        column += 1
+          while check_exists_by_xpath(get_xpath(row, column), self.driver):
+            cell_xpath = get_xpath(row, column)
+            label_column = self.driver.find_element(By.XPATH, cell_xpath).text
+            
+            if ('Imprimir') in label_column:
+              break
+            
+            build_dict(dict,column, label_column)
 
-      table_data.append(dict)
-      column = 1
-      row += 1
+            column += 1
 
-    print(table_data)
+          table_data.append(dict)
+          column = 1
+          row += 1
+        
+        self.click_next_page()
+        
+      print(table_data)
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
@@ -141,3 +174,17 @@ class Automation:
       if check_exists_by_xpath(xpath_label_last_years, self.driver):
         label_last_yers = self.driver.find_element(By.XPATH, xpath_label_last_years)
         label_last_yers.click()
+        
+  def returning_qtd_page(self):
+    # retornar número de débitos
+    if check_exists_by_xpath(xpath_qtd_page, self.driver):
+      label = self.driver.find_element(By.XPATH, xpath_qtd_page).text.strip()
+      qtd_page = int(label[-1])
+      
+      return qtd_page
+    
+  def click_next_page(self):
+    if check_exists_by_xpath(xpath_next_page, self.driver):
+      label_next_page = self.driver.find_element(By.XPATH, xpath_next_page)
+      label_next_page.click()
+        

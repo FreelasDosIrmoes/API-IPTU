@@ -10,4 +10,7 @@ expand_last_years = '//*[@id="exercicio"]/div/div[2]'
 xpath_label_last_years = '//*[@id="mat-option-1"]/span'
 xpath_error_msg = '//*[@id="cdk-overlay-2"]/snack-bar-container/simple-snack-bar/span'
 
+xpath_qtd_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/mat-paginator/div/div/div[2]/div'
+xpath_next_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/mat-paginator/div/div/div[2]/button[2]'
+
 url_site = 'https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu'
