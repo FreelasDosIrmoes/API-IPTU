@@ -44,7 +44,7 @@ def build_dict(dict, col, data):
 
 
 def process_pdf(data, driver, row, column):
-    button_download_pdf = get_xpath_table(row, column) + '//button/span[contains(text(), " Gerar PDF ")]'
+    button_download_pdf = get_xpath_table(row, column) + '/button/span[contains(text(), " Gerar PDF ")]'
     if check_exists_by_xpath(button_download_pdf, driver):
         driver.find_element(By.XPATH, button_download_pdf).click()
         if check_exists_by_xpath(button_confirmation_pdf, driver):
