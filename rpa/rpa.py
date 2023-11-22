@@ -120,9 +120,9 @@ class Automation:
       while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
         dict = {}
         
-        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
           sleep(0.5)
-          cell_xpath = get_xpath(row, column)
+          cell_xpath = get_xpath_table(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
           if ('Gerar PDF') in label_column:
