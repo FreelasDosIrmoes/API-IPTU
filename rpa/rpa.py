@@ -1,3 +1,9 @@
+import os
+
+from datetime import datetime
+from dotenv import load_dotenv
+from time import sleep
+
 from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
 from selenium import webdriver
@@ -6,10 +12,11 @@ from rpa.rpa_helper import *
 from rpa.variables import *
 
 from math import ceil
+from utils.log import Log
 
 
 class Automation:
-  def __init__(self):
+  def __init__(self, route = '/api/iptu'):
     self.url = url_site
 
     self.service = Service()
@@ -25,6 +32,8 @@ class Automation:
       "download.directory_upgrade": False,
       "safebrowsing.enabled": True
     })
+    
+    self.route = route
 
   def process_flux_current_year(self, code, owner):
     # fluxo do processo de automação do ano atual
@@ -66,6 +75,7 @@ class Automation:
 
   def passed_on_captcha(self):
     # passar do recaptch
+    start_captcha = datetime.now()
     solver = recaptchaV2EnterpriseProxyless()
     solver.set_verbose(1)
     solver.set_key(API_KEY)
@@ -75,13 +85,16 @@ class Automation:
     g_response = solver.solve_and_return_solution()
     if g_response != 0:
 
-        # preencher o campo que do captcha para a liberação
-        # g-recaptcha-response
+      # preencher o campo que do captcha para a liberação
+      # g-recaptcha-response
 
-        self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
-        self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
+      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      final_captcha = datetime.now()
+      
+      Log(self.route).time_captcha(final_captcha-start_captcha)
     else:
-        print ("task finished with error "+ solver.error_code)
+      Log(self.route).error_msg(solver.error_code)
 
   def extract_data_web(self, owner):
     # extrair os dados do site 
@@ -106,9 +119,10 @@ class Automation:
     if qtd_page <= 10:
       while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
         dict = {}
-
-        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
-          cell_xpath = get_xpath_table(row, column)
+        
+        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+          sleep(0.5)
+          cell_xpath = get_xpath(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
           if ('Gerar PDF') in label_column:
