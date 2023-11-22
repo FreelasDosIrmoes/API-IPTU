@@ -13,6 +13,7 @@ from rpa.rpa_helper import *
 from rpa.variables import *
 
 from math import ceil
+from utils.log import Log
 
 load_dotenv()
 
@@ -21,7 +22,7 @@ WEB_KEY = os.getenv('WEB_KEY')
 
 
 class Automation:
-  def __init__(self):
+  def __init__(self, route = '/api/iptu'):
     self.url = url_site
 
     self.service = Service()
@@ -30,6 +31,8 @@ class Automation:
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
+    
+    self.route = route
 
   def process_flux_current_year(self, code, owner):
     # fluxo do processo de automação do ano atual
@@ -113,7 +116,7 @@ class Automation:
       # caso com menos ou igual a 10 débitos na página
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
         dict = {}
-
+        
         while check_exists_by_xpath(get_xpath(row, column), self.driver):
           cell_xpath = get_xpath(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
