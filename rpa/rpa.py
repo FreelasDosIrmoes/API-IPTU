@@ -1,5 +1,6 @@
 import os
 
+from datetime import datetime
 from dotenv import load_dotenv
 from time import sleep
 
@@ -74,6 +75,7 @@ class Automation:
 
   def passed_on_captcha(self):
     # passar do recaptch
+    start_captcha = datetime.now()
     solver = recaptchaV2EnterpriseProxyless()
     solver.set_verbose(1)
     solver.set_key(API_KEY)
@@ -83,13 +85,16 @@ class Automation:
     g_response = solver.solve_and_return_solution()
     if g_response != 0:
 
-        # preencher o campo que do captcha para a liberação
-        # g-recaptcha-response
+      # preencher o campo que do captcha para a liberação
+      # g-recaptcha-response
 
-        self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
-        self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
+      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      final_captcha = datetime.now()
+      
+      Log(self.route).time_captcha(final_captcha-start_captcha)
     else:
-        print ("task finished with error "+ solver.error_code)
+      Log(self.route).error_msg(solver.error_code)
 
   def extract_data_web(self, owner):
     # extrair os dados do site 
@@ -116,8 +121,8 @@ class Automation:
       # caso com menos ou igual a 10 débitos na página
       while check_exists_by_xpath(get_xpath(row, column), self.driver):
         dict = {}
-        
         while check_exists_by_xpath(get_xpath(row, column), self.driver):
+          sleep(0.5)
           cell_xpath = get_xpath(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
