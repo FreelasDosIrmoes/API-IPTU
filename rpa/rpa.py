@@ -8,18 +8,11 @@ from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-
 from rpa.rpa_helper import *
 from rpa.variables import *
 
 from math import ceil
 from utils.log import Log
-
-load_dotenv()
-
-API_KEY = os.getenv('API_KEY')
-WEB_KEY = os.getenv('WEB_KEY')
 
 
 class Automation:
@@ -29,9 +22,16 @@ class Automation:
     self.service = Service()
     self.options = webdriver.ChromeOptions()
     self.options.add_experimental_option("detach", True)   # tirar dps
+    # self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
+    self.options.add_experimental_option("prefs", {
+      "download.default_directory": PATH_DOWNLOAD,
+      "download.prompt_for_download": False,
+      "download.directory_upgrade": False,
+      "safebrowsing.enabled": True
+    })
     
     self.route = route
 
@@ -114,19 +114,19 @@ class Automation:
     column = 1
 
     table_data = []
-    
     qtd_page = self.returning_qtd_page()
     
     if qtd_page <= 10:
-      # caso com menos ou igual a 10 débitos na página
-      while check_exists_by_xpath(get_xpath(row, column), self.driver):
+      while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
         dict = {}
+        
         while check_exists_by_xpath(get_xpath(row, column), self.driver):
           sleep(0.5)
           cell_xpath = get_xpath(row, column)
           label_column = self.driver.find_element(By.XPATH, cell_xpath).text
           
-          if ('Imprimir') in label_column:
+          if ('Gerar PDF') in label_column:
+            process_pdf(dict, self.driver, row)
             break
           
           build_dict(dict,column, label_column)
@@ -137,21 +137,21 @@ class Automation:
         column = 1
         row += 1
         
-      print(table_data)
-        
+
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
       
       for i in range(num):
-        while check_exists_by_xpath(get_xpath(row, column), self.driver):
+        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
           dict = {}
 
-          while check_exists_by_xpath(get_xpath(row, column), self.driver):
-            cell_xpath = get_xpath(row, column)
+          while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
+            cell_xpath = get_xpath_table(row, column)
             label_column = self.driver.find_element(By.XPATH, cell_xpath).text
-            
-            if ('Imprimir') in label_column:
+
+            if ('Gerar PDF') in label_column:
+              process_pdf(dict, self.driver, row)
               break
             
             build_dict(dict,column, label_column)
@@ -163,8 +163,9 @@ class Automation:
           row += 1
         
         self.click_next_page()
-        
-      print(table_data)
+
+    verify_data(table_data)
+    return table_data
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
