@@ -91,7 +91,7 @@ def get_data_table(driver, table_data, row, column):
           label_column = driver.find_element(By.XPATH, cell_xpath).text
           
           if ('Gerar PDF') in label_column:
-            #process_pdf(dict, driver, row)
+            process_pdf(dict, driver, row)
             break
           
           build_dict(dict,column, label_column)
