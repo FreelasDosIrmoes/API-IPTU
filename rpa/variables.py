@@ -23,6 +23,8 @@ xpath_error_msg = '//*[@id="cdk-overlay-2"]/snack-bar-container/simple-snack-bar
 xpath_qtd_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/mat-paginator/div/div/div[2]/div'
 xpath_next_page = '//*[@id="containerPrincipal"]/div/app-emissao-dar-iptu/shared-page/shared-page-content/div/mat-card/mat-card-content/mat-paginator/div/div/div[2]/button[2]'
 
+xpath_click_continue_pdf_dowloads = '//div[4]/button'
+
 url_site = 'https://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu'
 
 button_confirmation_pdf = '//button/span[contains(text(), "Confirmar")]'

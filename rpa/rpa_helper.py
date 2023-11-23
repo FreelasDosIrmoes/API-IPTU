@@ -47,8 +47,11 @@ def process_pdf(data, driver, row):
     remove_all_relatorio_dar()
     button_download_pdf = get_xpath_button_download(row)
     if check_exists_by_xpath(button_download_pdf, driver):
-        sleep(1.5)
+        sleep(1.5)        
         driver.find_element(By.XPATH, button_download_pdf).click()
+        sleep(0.5)
+        if check_exists_by_xpath(xpath_click_continue_pdf_dowloads, driver):
+            driver.find_element(By.XPATH, xpath_click_continue_pdf_dowloads).click()
         if check_exists_by_xpath(button_confirmation_pdf, driver):
             driver.find_element(By.XPATH, button_confirmation_pdf).click()
         verify_download()

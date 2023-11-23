@@ -123,7 +123,7 @@ class Automation:
       # caso com menos ou igual a 10 débitos na página
       get_data_table(self.driver, table_data, row, column)
         
-      print(table_data)
+      return table_data
         
     else:
       # caso com mais de 10 débitos na página
@@ -134,7 +134,7 @@ class Automation:
         
         click_next_page(self.driver)
         
-      print(table_data)
+      return table_data
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
