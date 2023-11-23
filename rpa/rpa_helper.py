@@ -74,10 +74,35 @@ def verify_download():
             sleep(0.5)
             return
 
-
 def verify_data(table_data: list[dict]):
     for data in table_data:
         if "pdf_byte" not in data.keys():
             raise Exception("o dicionário", data, "não possui o campo 'pdf_byte'.")
         if data['pdf_byte'] == b'':
             raise Exception("o dicionário", data, "possui o campo 'pdf_byte' vazio.")
+
+def get_data_table(driver, table_data, row, column):  
+    while check_exists_by_xpath(get_xpath_table(row, column), driver):
+        dict = {}
+        
+        while check_exists_by_xpath(get_xpath_table(row, column), driver):
+          sleep(0.5)
+          cell_xpath = get_xpath_table(row, column)
+          label_column = driver.find_element(By.XPATH, cell_xpath).text
+          
+          if ('Gerar PDF') in label_column:
+            #process_pdf(dict, driver, row)
+            break
+          
+          build_dict(dict,column, label_column)
+
+          column += 1
+
+        table_data.append(dict)
+        column = 1
+        row += 1
+        
+def click_next_page(driver):
+    if check_exists_by_xpath(xpath_next_page, driver):
+      label_next_page = driver.find_element(By.XPATH, xpath_next_page)
+      label_next_page.click()

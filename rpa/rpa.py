@@ -8,6 +8,8 @@ from anticaptchaofficial.recaptchav2enterpriseproxyless import *
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+
 from rpa.rpa_helper import *
 from rpa.variables import *
 
@@ -114,58 +116,25 @@ class Automation:
     column = 1
 
     table_data = []
+      
     qtd_page = self.returning_qtd_page()
     
     if qtd_page <= 10:
-      while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
-        dict = {}
+      # caso com menos ou igual a 10 débitos na página
+      get_data_table(self.driver, table_data, row, column)
         
-        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
-          sleep(0.5)
-          cell_xpath = get_xpath_table(row, column)
-          label_column = self.driver.find_element(By.XPATH, cell_xpath).text
-          
-          if ('Gerar PDF') in label_column:
-            process_pdf(dict, self.driver, row)
-            break
-          
-          build_dict(dict,column, label_column)
-
-          column += 1
-
-        table_data.append(dict)
-        column = 1
-        row += 1
+      print(table_data)
         
-
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
       
       for i in range(num):
-        while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
-          dict = {}
-
-          while check_exists_by_xpath(get_xpath_table(row, column), self.driver):
-            cell_xpath = get_xpath_table(row, column)
-            label_column = self.driver.find_element(By.XPATH, cell_xpath).text
-
-            if ('Gerar PDF') in label_column:
-              process_pdf(dict, self.driver, row)
-              break
-            
-            build_dict(dict,column, label_column)
-
-            column += 1
-
-          table_data.append(dict)
-          column = 1
-          row += 1
+        get_data_table(self.driver, table_data, row, column)
         
-        self.click_next_page()
-
-    verify_data(table_data)
-    return table_data
+        click_next_page(self.driver)
+        
+      print(table_data)
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
@@ -188,9 +157,4 @@ class Automation:
       qtd_page = int(label[-1])
       
       return qtd_page
-    
-  def click_next_page(self):
-    if check_exists_by_xpath(xpath_next_page, self.driver):
-      label_next_page = self.driver.find_element(By.XPATH, xpath_next_page)
-      label_next_page.click()
-     
+  
