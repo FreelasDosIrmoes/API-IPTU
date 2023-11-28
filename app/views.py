@@ -31,13 +31,19 @@ def trigger_process():
     if request.method != 'POST':
         raise MethodNotAllowed
     temps = IptuTemp.query.all()
+    for iptu in temps:
+        # iptuDB = Iptu(code=iptu.code)
+        # db.session.add(iptuDB)
+        # db.session.commit()
+        # print(iptuDB.id)
+        try:
+            cobrancasTO = process_extract_data(iptu)
+            cobrancas = create_cobranca(cobrancasTO)
+            [db.session.add(cobranca) for cobranca in cobrancas]
+            db.session.commit()
+        except Exception as e:
+            Log(request.url).error_msg(e)
+            raise e
+
     return make_response([{"code": data.code, "status": data.status} for data in temps])
 
-
-@app.route(f"{PATH_DEFAULT}/upload", methods=['POST'])
-def upload():
-    if request.method == "POST":
-        f = handling_get_file('file', request)
-        f.save(f'../storage/{f.filename}.txt')
-        return Response(status=201)
-    raise MethodNotAllowed()

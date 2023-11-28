@@ -43,7 +43,7 @@ class Automation:
     self.put_info_web(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      self.extract_data_web(owner)
+      return self.extract_data_web(owner)
   
   def process_flux_previous_years(self, code, owner):
   # fluxo do processo de automação dos anos anteriores
@@ -51,7 +51,7 @@ class Automation:
     self.put_info_web_last_years(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      self.extract_data_web(owner)
+      return self.extract_data_web(owner)
 
   def init_browser(self):
     #login no site
@@ -106,8 +106,8 @@ class Automation:
       label_click = self.driver.find_element(By.XPATH, expand_table)
       label_click.click()  
 
-    if not verify_owner(owner, xpath_label_name, self.driver):
-      return
+    # if not verify_owner(owner, xpath_label_name, self.driver):
+    #   return
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
