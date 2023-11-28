@@ -57,5 +57,7 @@ instance/
 .webassets-cache
 migrations/
 
+
 .idea
+
 .env
