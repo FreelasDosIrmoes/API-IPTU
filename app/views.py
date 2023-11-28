@@ -14,11 +14,24 @@ def handle_exception(e: HTTPException):
     )
 
 
-@app.route(f"{PATH_DEFAULT}/<int:iptu_code>")
-def hello_world(iptu_code: int):
+@app.route(f"{PATH_DEFAULT}/<int:iptu_code>", methods=['POST'])
+def save_iptucode(iptu_code: int):
+    if request.method != "POST":
+        raise MethodNotAllowed
+    db.session.add(IptuTemp(code=iptu_code, status="WAITING"))
+    db.session.commit()
     return make_response({
-        "iptu_code": iptu_code
+        "iptu_code": iptu_code,
+        "status": "WAITING"
     })
+
+
+@app.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
+def trigger_process():
+    if request.method != 'POST':
+        raise MethodNotAllowed
+    temps = IptuTemp.query.all()
+    return make_response([{"code": data.code, "status": data.status} for data in temps])
 
 
 @app.route(f"{PATH_DEFAULT}/upload", methods=['POST'])
@@ -28,4 +41,3 @@ def upload():
         f.save(f'../storage/{f.filename}.txt')
         return Response(status=201)
     raise MethodNotAllowed()
-
