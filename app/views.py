@@ -1,13 +1,5 @@
-# app.py
-from flask import *
 from werkzeug.exceptions import *
-from api.service import handling_get_file
-from model.model import db, Iptu
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/iptu-db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+from app import *
 
 PATH_DEFAULT = "/api/iptu"
 
@@ -37,10 +29,3 @@ def upload():
         return Response(status=201)
     raise MethodNotAllowed()
 
-
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-
-if __name__ == "__main__":
-    app.run(debug=True)
