@@ -4,6 +4,10 @@ from sqlalchemy import ForeignKey
 
 db = SQLAlchemy()
 
+class IptuTemp(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(10), unique=True, nullable=False)
+    status = db.Column(db.String(20))
 
 class Iptu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
