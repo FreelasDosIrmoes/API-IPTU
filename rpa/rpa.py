@@ -23,8 +23,8 @@ class Automation:
 
     self.service = Service()
     self.options = webdriver.ChromeOptions()
-    self.options.add_experimental_option("detach", True)   # tirar dps
-    # self.options.add_argument("--headless=new")
+    # self.options.add_experimental_option("detach", True)   # tirar dps
+    self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
@@ -71,7 +71,7 @@ class Automation:
     if check_exists_by_xpath(xpath_buttom_submit, self.driver):
       buttom_consultar = self.driver.find_element(By.XPATH, xpath_buttom_submit)
       buttom_consultar.click()
-      sleep(1)  # ver se tira (desperdício)
+      sleep(1.5)  # ver se tira (desperdício)
       return not check_exists_by_xpath(xpath_error_msg, self.driver)
     return False
 
@@ -118,6 +118,9 @@ class Automation:
     table_data = []
       
     qtd_page = self.returning_qtd_page()
+
+    if qtd_page is None:
+      return []
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página

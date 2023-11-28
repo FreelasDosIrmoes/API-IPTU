@@ -18,7 +18,7 @@ def handle_exception(e: HTTPException):
 def save_iptucode(iptu_code: int):
     if request.method != "POST":
         raise MethodNotAllowed
-    db.session.add(IptuTemp(code=iptu_code, status="WAITING"))
+    db.session.add(Iptu(code=iptu_code, status="WAITING"))
     db.session.commit()
     return make_response({
         "iptu_code": iptu_code,
@@ -30,20 +30,17 @@ def save_iptucode(iptu_code: int):
 def trigger_process():
     if request.method != 'POST':
         raise MethodNotAllowed
-    temps = IptuTemp.query.all()
-    for iptu in temps:
-        # iptuDB = Iptu(code=iptu.code)
-        # db.session.add(iptuDB)
-        # db.session.commit()
-        # print(iptuDB.id)
+    iptus = Iptu.query.filter_by(status="WAITING").all()
+    for iptu in iptus:
         try:
             cobrancasTO = process_extract_data(iptu)
-            cobrancas = create_cobranca(cobrancasTO)
+            cobrancas = create_cobranca(cobrancasTO, iptu)
             [db.session.add(cobranca) for cobranca in cobrancas]
             db.session.commit()
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e
-
-    return make_response([{"code": data.code, "status": data.status} for data in temps])
+        iptu.status = "DONE"
+        db.session.commit()
+    return make_response([{"id": data.id, "total": data.total} for data in cobrancas])
 
