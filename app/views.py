@@ -37,6 +37,7 @@ def trigger_process():
             cobrancas = create_cobranca(cobrancasTO, iptu)
             [db.session.add(cobranca) for cobranca in cobrancas]
             db.session.commit()
+
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e

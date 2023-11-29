@@ -2,20 +2,20 @@ from app import *
 from datetime import datetime
 from flask import request
 
-from app.model.model import IptuTemp, Iptu
+from app.model.model import Iptu
 from utils.log import Log
 from rpa.rpa import Automation
 
 
-def process_extract_data(iptu: IptuTemp):
+def process_extract_data(iptu: Iptu):
     start_process = datetime.now()
     robot = Automation()
-    # previous = robot.process_flux_previous_years(iptu.code, '')
+    previous = robot.process_flux_previous_years(iptu.code, '')
     current = robot.process_flux_current_year(iptu.code, '')
     finish_process = datetime.now()
     Log(request.url).time_all_process(finish_process - start_process)
-    # return previous + current
-    return current
+    return previous + current
+    # return current
 
 
 def create_cobranca(data: list[dict], iptu: Iptu):
@@ -28,7 +28,10 @@ def dict_to_cobranca(d: dict, iptu: Iptu):
     outros = float(remove_common(d['outros']))
     total = float(remove_common(d['total']))
     cota = d['cota']
-    return Cobranca(ano=ano, multa=multa, outros=outros, total=total, cota=cota, iptu=iptu)
+    pdf_data = d['pdf_byte']
+    return Cobranca(ano=ano, multa=multa, outros=outros,
+                    total=total, cota=cota, iptu=iptu,
+                    pdf=pdf_data)
 
 
 def remove_common(var: str):

@@ -4,10 +4,6 @@ from sqlalchemy import ForeignKey
 
 db = SQLAlchemy()
 
-class IptuTemp(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(10), unique=True, nullable=False)
-    status = db.Column(db.String(20))
 
 class Iptu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,4 +32,6 @@ class Cobranca(db.Model):
     outros = db.Column(db.Float)
     total = db.Column(db.Float)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
+    pdf = db.Column(db.LargeBinary)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
