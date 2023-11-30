@@ -14,8 +14,9 @@ def process_extract_data(iptu: Iptu):
     current = robot.process_flux_current_year(iptu.code, '')
     finish_process = datetime.now()
     Log(request.url).time_all_process(finish_process - start_process)
+    previous = previous if previous else []
+    current = current if current else []
     return previous + current
-    # return current
 
 
 def create_cobranca(data: list[dict], iptu: Iptu):
