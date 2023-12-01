@@ -27,7 +27,7 @@ class Dono(db.Model):
 class Cobranca(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ano = db.Column(db.Integer)
-    cota = db.Column(db.String(100))
+    cota = db.Column(db.String(50))
     multa = db.Column(db.Float)
     outros = db.Column(db.Float)
     total = db.Column(db.Float)

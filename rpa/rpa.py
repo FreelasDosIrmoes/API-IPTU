@@ -23,7 +23,6 @@ class Automation:
 
     self.service = Service()
     self.options = webdriver.ChromeOptions()
-    # self.options.add_experimental_option("detach", True)   # tirar dps
     self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
@@ -106,8 +105,8 @@ class Automation:
       label_click = self.driver.find_element(By.XPATH, expand_table)
       label_click.click()  
 
-    # if not verify_owner(owner, xpath_label_name, self.driver):
-    #   return
+    if (owner != '' and owner is not None) and not verify_owner(owner, xpath_label_name, self.driver):
+      return
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
