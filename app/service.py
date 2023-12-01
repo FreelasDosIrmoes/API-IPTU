@@ -1,10 +1,12 @@
-from app import *
 from datetime import datetime
 from flask import request
-
-from app.model.model import Iptu
+from app import app
+from app.model.model import Iptu, Cobranca
 from utils.log import Log
 from rpa.rpa import Automation
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import registry
+
 
 
 def process_extract_data(iptu: Iptu):
@@ -37,3 +39,29 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
 
 def remove_common(var: str):
     return var.replace(",", ".")
+
+
+def query_to_get_iptu_late(app_flask):
+    with app_flask.app_context():
+        engine = create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'], echo=True)
+        conn = engine.connect()
+        query = text('''SELECT *
+                        FROM iptu
+                        WHERE status = 'WAITING'
+                           OR (status = 'DONE' AND
+                               EXTRACT(DAY FROM AGE(CURRENT_DATE, updated_at AT TIME ZONE 'UTC' AT TIME ZONE '-03:00')) >= 1);
+      ''')
+        result = conn.execute(query)
+
+        return [tuple_to_iptu(t) for t in result.fetchall()]
+
+
+def tuple_to_iptu(t):
+    return Iptu(
+        id=t[0],
+        name=t[1],
+        code=t[2],
+        address=t[3],
+        status=t[4],
+        updated_at=t[5]
+    )

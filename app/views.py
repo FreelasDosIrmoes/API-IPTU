@@ -6,7 +6,7 @@ import time
 PATH_DEFAULT = "/api/iptu"
 
 
-@app.errorhandler(HTTPException)
+@app_flask.errorhandler(HTTPException)
 def handle_exception(e: HTTPException):
     return make_response(
         json.dumps({
@@ -16,7 +16,7 @@ def handle_exception(e: HTTPException):
     )
 
 
-@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['POST', 'GET'])
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['POST', 'GET'])
 def save_iptucode(iptu_code: str):
     if request.method == "POST":
         db.session.add(Iptu(code=iptu_code, status="WAITING"))
@@ -60,7 +60,7 @@ def save_iptucode(iptu_code: str):
         return make_response(response_json)
 
 
-@app.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
+@app_flask.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
 def get_pdf(cobranca_id):
     cobranca = Cobranca.query.get(cobranca_id)
     if cobranca is None:
@@ -73,14 +73,14 @@ def get_pdf(cobranca_id):
 
 automation_status = multiprocessing.Value("i", 0)
 
-@app.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
+@app_flask.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
 def trigger_process():
     if request.method != 'POST':
         raise MethodNotAllowed
     if automation_status.value == 1:
         return {"message": "Automaçao rodando"}, 409
     automation_status.value = 1
-    iptus = Iptu.query.filter_by(status="WAITING").all()
+    iptus = query_to_get_iptu_late(app_flask)
     for iptu in iptus:
         try:
             cobrancasTO = process_extract_data(iptu)
