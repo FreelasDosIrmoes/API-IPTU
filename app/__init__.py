@@ -1,9 +1,11 @@
 from flask import *
 from app.model.model import *
-from app.service import handling_get_file
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from app.service import *
+from rpa.rpa import Automation
+from utils.log import Log
 
 load_dotenv()
 DB_NAME = os.getenv('DB_NAME')
