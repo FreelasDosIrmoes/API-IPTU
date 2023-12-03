@@ -84,6 +84,9 @@ def trigger_process():
     for iptu in iptus:
         try:
             cobrancas_to = process_extract_data(iptu)
+            if len(cobrancas_to) == 0:
+                print("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
+                continue
             cobrancas = create_cobranca(cobrancas_to, iptu)
 
             cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
