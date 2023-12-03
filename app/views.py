@@ -88,7 +88,7 @@ def trigger_process():
 
             cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
 
-            [db.session.delete(payed) for payed in get_cobrancas_payed(cobrancas, cobrancas_db)]
+            [db.session.delete(cobranca_db) for cobranca_db in cobrancas_db]
             db.session.commit()
 
             [db.session.add(cobranca) for cobranca in cobrancas]
