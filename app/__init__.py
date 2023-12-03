@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from app.service import *
+from datetime import datetime
 from rpa.rpa import Automation
 from utils.log import Log
 
@@ -22,6 +23,5 @@ migrate = Migrate(app_flask, db)
 #     db.drop_all()
 #     db.create_all()
 
-query_to_get_iptu(app_flask)
 
 from app import views

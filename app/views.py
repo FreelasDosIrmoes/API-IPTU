@@ -70,8 +70,8 @@ def get_pdf(cobranca_id):
     return pdf_data, 200, {'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=arquivo.pdf'}
 
 
-
 automation_status = multiprocessing.Value("i", 0)
+
 
 @app_flask.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
 def trigger_process():
@@ -83,8 +83,14 @@ def trigger_process():
     iptus = query_to_get_iptu_late(app_flask)
     for iptu in iptus:
         try:
-            cobrancasTO = process_extract_data(iptu)
-            cobrancas = create_cobranca(cobrancasTO, iptu)
+            cobrancas_to = process_extract_data(iptu)
+            cobrancas = create_cobranca(cobrancas_to, iptu)
+
+            cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
+
+            [db.session.delete(payed) for payed in get_cobrancas_payed(cobrancas, cobrancas_db)]
+            db.session.commit()
+
             [db.session.add(cobranca) for cobranca in cobrancas]
             db.session.commit()
 
@@ -92,6 +98,7 @@ def trigger_process():
             Log(request.url).error_msg(e)
             raise e
         iptu.status = "DONE"
+        iptu.updated_at = datetime.now()
         db.session.commit()
         automation_status.value = 0
     return make_response([{"id": data.id, "total": data.total} for data in cobrancas])

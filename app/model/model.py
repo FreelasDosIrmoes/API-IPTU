@@ -35,3 +35,6 @@ class Cobranca(db.Model):
     pdf = db.Column(db.LargeBinary)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
+    def __eq__(self, other):
+        return self.total == other.total and self.cota == other.cota and self.multa == other.multa and self.ano == other.ano \
+            and self.outros == other.outros
