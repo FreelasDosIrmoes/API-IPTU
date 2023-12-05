@@ -37,3 +37,14 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
 
 def remove_common(var: str):
     return var.replace(",", ".")
+
+def validate_fields(data: dict):
+    if 'code' not in data:
+        return False, "Campo 'code' não informado"
+    if 'owner' not in data:
+        return False, "Campo 'owner' não informado"
+    if 'email' not in data['owner']:
+        return False, "Campo 'email' não informado"
+    if 'number' not in data['owner']:
+        return False, "Campo 'number' não informado"
+    return True, None
