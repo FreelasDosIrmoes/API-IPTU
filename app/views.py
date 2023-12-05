@@ -50,23 +50,28 @@ def save_iptucode():
 def update_iptu(iptu_code: str):
     if request.method != 'PUT':
         raise MethodNotAllowed
+
     data = request.get_json()
+    ok, err = validate_fields_put(data)
+    if not ok:
+        return make_response(jsonify({"errors": err})), 400
+
     iptu = Iptu.query.filter_by(code=iptu_code).first()
+
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+
+    iptu.code = data['code']
     iptu.name = data['name']
     iptu.dono.email = data['owner']['email']
     iptu.dono.numero = data['owner']['number']
-    db.session.commit()
-    return make_response({
-        "id": iptu.id,
-        "code": iptu.code,
-        "name": iptu.name,
-        "dono": {
-            "email": iptu.dono.email,
-            "numero": iptu.dono.numero
-        }
-    }), 200
+    iptu.dono.nome = data['owner']['name']
+    try:
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest(str(e))
+
+    return make_response(build_request(iptu, iptu.cobranca)), 200
 
 
 @app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
@@ -87,8 +92,10 @@ def delete_iptu(iptu_code: str):
     if request.method != 'DELETE':
         raise MethodNotAllowed
     iptu = Iptu.query.filter_by(code=iptu_code).first()
+
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+
     db.session.delete(iptu)
     db.session.commit()
     return make_response({'message': 'IPTU deletado com sucesso'})

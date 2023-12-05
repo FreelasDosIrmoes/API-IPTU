@@ -2,7 +2,7 @@ from app import *
 from datetime import datetime
 from flask import request
 
-from app.model.model import Iptu
+from app.model.model import Iptu, Cobranca
 from utils.log import Log
 from rpa.rpa import Automation
 
@@ -38,6 +38,7 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
 def remove_common(var: str):
     return var.replace(",", ".")
 
+
 def validate_fields_post(data: dict):
     errors = []
     if 'code' not in data:
@@ -45,11 +46,13 @@ def validate_fields_post(data: dict):
     if 'owner' not in data:
         errors.append("Campo 'owner' não informado")
     if 'email' not in data['owner']:
-        errors.append("Campo 'email' não informado")
+        errors.append("Campo 'owner.email' não informado")
     if 'number' not in data['owner']:
-        errors.append("Campo 'number' não informado")
+        errors.append("Campo 'owner.number' não informado")
     if 'name' not in data:
         errors.append("Campo 'name' não informado")
+    if 'name' not in data['owner']:
+        errors.append("Campo 'owner.name' não informado")
     return len(errors) == 0, errors
 
 
@@ -63,12 +66,16 @@ def validate_fields_put(data: dict):
     errors = []
     if 'name' not in data:
         errors.append("Campo 'name' não informado")
+    if 'code' not in data:
+        errors.append("Campo 'code' não informado")
     if 'owner' not in data:
         errors.append("Campo 'owner' não informado")
     if 'email' not in data['owner']:
         errors.append("Campo 'email' não informado")
     if 'number' not in data['owner']:
         errors.append("Campo 'number' não informado")
+    if 'name' not in data['owner']:
+        errors.append("Campo 'name' não informado")
     return len(errors) == 0, errors
 
 
@@ -78,6 +85,7 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
         'name': iptu.name,
         'code': iptu.code,
         'status': iptu.status,
+        'inconsistent': iptu.inconsistent,
         'dono': {
             'nome': iptu.dono.nome if iptu.dono else None,
             'email': iptu.dono.email if iptu.dono else None,
