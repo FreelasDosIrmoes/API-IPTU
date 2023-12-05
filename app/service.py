@@ -38,13 +38,35 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
 def remove_common(var: str):
     return var.replace(",", ".")
 
-def validate_fields(data: dict):
+def validate_fields_post(data: dict):
+    errors = []
     if 'code' not in data:
-        return False, "Campo 'code' não informado"
+        errors.append("Campo 'code' não informado")
     if 'owner' not in data:
-        return False, "Campo 'owner' não informado"
+        errors.append("Campo 'owner' não informado")
     if 'email' not in data['owner']:
-        return False, "Campo 'email' não informado"
+        errors.append("Campo 'email' não informado")
     if 'number' not in data['owner']:
-        return False, "Campo 'number' não informado"
-    return True, None
+        errors.append("Campo 'number' não informado")
+    if 'name' not in data:
+        errors.append("Campo 'name' não informado")
+    return len(errors) == 0, errors
+
+
+def build_iptu_and_dono(data: dict[str]) -> (Iptu, Dono):
+    iptu = Iptu(code=data['code'], name=data['name'], status="WAITING")
+    dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], iptu=iptu)
+    return iptu, dono
+
+
+def validate_fields_put(data: dict):
+    errors = []
+    if 'name' not in data:
+        errors.append("Campo 'name' não informado")
+    if 'owner' not in data:
+        errors.append("Campo 'owner' não informado")
+    if 'email' not in data['owner']:
+        errors.append("Campo 'email' não informado")
+    if 'number' not in data['owner']:
+        errors.append("Campo 'number' não informado")
+    return len(errors) == 0, errors

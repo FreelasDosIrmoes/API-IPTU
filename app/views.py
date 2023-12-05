@@ -1,3 +1,4 @@
+import app
 from werkzeug.exceptions import *
 from app import *
 import multiprocessing
@@ -22,26 +23,44 @@ def save_iptucode():
         raise MethodNotAllowed
     data = request.get_json()
 
-    ok, err = validate_fields(data)
+    ok, err = validate_fields_post(data)
     if not ok:
         return make_response(jsonify({"erro": err})), 400
-    owner = data["owner"]
-    code = data["code"]
-    iptu = Iptu(code=code, status="WAITING")
+    iptu, dono = build_iptu_and_dono(data)
     db.session.add(iptu)
-    db.session.commit()
-    dono = Dono(email=owner.get("email", None), numero=owner.get("number", None), iptu=iptu)
     db.session.add(dono)
     db.session.commit()
     return make_response({
         "id": iptu.id,
         "code": iptu.code,
+        "name": iptu.name,
         "dono": {
             "email": dono.email,
             "numero": dono.numero
         }
     }), 201
 
+@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
+def update_iptu(iptu_code: str):
+    if request.method != 'PUT':
+        raise MethodNotAllowed
+    data = request.get_json()
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+    iptu.name = data['name']
+    iptu.dono.email = data['owner']['email']
+    iptu.dono.numero = data['owner']['number']
+    db.session.commit()
+    return make_response({
+        "id": iptu.id,
+        "code": iptu.code,
+        "name": iptu.name,
+        "dono": {
+            "email": iptu.dono.email,
+            "numero": iptu.dono.numero
+        }
+    }), 200
 
 @app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
 def get_iptu(iptu_code: str):
