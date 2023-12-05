@@ -11,8 +11,8 @@ class Iptu(db.Model):
     code = db.Column(db.String(10), unique=True, nullable=False)
     status = db.Column(db.String(20))
     inconsistent = db.Column(db.Boolean, default=False)
-    dono = db.relationship("Dono", uselist=False, backref="iptu")
-    cobranca = db.relationship("Cobranca", backref="iptu")
+    dono = db.relationship("Dono", cascade="all,delete", uselist=False, backref="iptu")
+    cobranca = db.relationship("Cobranca", cascade="all,delete", backref="iptu")
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
 

@@ -99,6 +99,19 @@ def get_iptu(iptu_code: str):
 
     return make_response(response_json)
 
+
+@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
+def delete_iptu(iptu_code: str):
+    if request.method != 'DELETE':
+        raise MethodNotAllowed
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+    db.session.delete(iptu)
+    db.session.commit()
+    return make_response({'message': 'IPTU deletado com sucesso'})
+
+
 @app.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
 def get_pdf(cobranca_id):
     cobranca = Cobranca.query.get(cobranca_id)
