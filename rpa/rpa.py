@@ -42,7 +42,7 @@ class Automation:
     self.put_info_web(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      return self.extract_data_web(owner)
+      return self.extract_data_web(owner, flg_atual = True)
   
   def process_flux_previous_years(self, code, owner):
   # fluxo do processo de automação dos anos anteriores
@@ -50,7 +50,7 @@ class Automation:
     self.put_info_web_last_years(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      return self.extract_data_web(owner)
+      return self.extract_data_web(owner, flg_atual = False)
 
   def init_browser(self):
     #login no site
@@ -97,16 +97,17 @@ class Automation:
     else:
       Log(self.route).error_msg(solver.error_code)
 
-  def extract_data_web(self, owner):
+  def extract_data_web(self, owner, flg_atual):
     # extrair os dados do site 
     sleep(2)
+    flg_inconsistente = False
     
     if check_exists_by_xpath(expand_table, self.driver):
       label_click = self.driver.find_element(By.XPATH, expand_table)
       label_click.click()  
 
-    if (owner != '' and owner is not None) and not verify_owner(owner, xpath_label_name, self.driver):
-      return
+    if (owner != '' and owner is not None) and verify_owner(owner, xpath_label_name, self.driver):
+      flg_inconsistente = True
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
@@ -123,10 +124,10 @@ class Automation:
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
-      get_data_table(self.driver, table_data, row, column)
+      get_data_table(self.driver, table_data, row, column, flg_atual)
         
-      return table_data
-        
+      return table_data, flg_inconsistente
+         
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
