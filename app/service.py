@@ -87,7 +87,7 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
     outros = float(remove_common(cobranca_dict['outros']))
     total = float(remove_common(cobranca_dict['total']))
     cota = cobranca_dict['cota']
-    pdf_data = cobranca_dict['pdf']
+    pdf_data = cobranca_dict['pdf_byte']
     return Cobranca(ano=ano, multa=multa, outros=outros,
                     total=total, cota=cota, iptu=iptu,
                     pdf=pdf_data)

@@ -83,6 +83,7 @@ def trigger_process():
     iptus = query_to_get_iptu_late(app_flask)
     for iptu in iptus:
         try:
+            iptu = Iptu.query.get(iptu.id)
             cobrancas_to = process_extract_data(iptu)
             if len(cobrancas_to) == 0:
                 print("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
@@ -92,16 +93,15 @@ def trigger_process():
             cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
 
             [db.session.delete(cobranca_db) for cobranca_db in cobrancas_db]
-            db.session.commit()
 
             [db.session.add(cobranca) for cobranca in cobrancas]
+
+            iptu.status = "DONE"
+            iptu.updated_at = datetime.now()
             db.session.commit()
 
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e
-        iptu.status = "DONE"
-        iptu.updated_at = datetime.now()
-        db.session.commit()
-        automation_status.value = 0
-    return make_response([{"id": data.id, "total": data.total} for data in cobrancas])
+    automation_status.value = 0
+    return {"message": "Automaçao finalizada"}, 201
