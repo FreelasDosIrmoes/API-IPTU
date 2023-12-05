@@ -1,10 +1,10 @@
-from app import *
 from datetime import datetime
 from flask import request
 
-from app.model.model import Iptu, Cobranca
+from app.model.model import Iptu, Cobranca, Dono
 from utils.log import Log
 from rpa.rpa import Automation
+from sqlalchemy import create_engine, text
 
 
 def process_extract_data(iptu: Iptu):
@@ -105,3 +105,28 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
         ],
         'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
     }
+
+
+def query_to_get_iptu_late(app_flask):
+    with app_flask.app_context():
+        engine = create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'], echo=True)
+        conn = engine.connect()
+        query = text('''SELECT i.id 
+                        FROM iptu as i
+                        WHERE status = 'WAITING'
+                        OR (status <> 'WAITING' AND DATE_TRUNC('day', updated_at) = CURRENT_DATE - INTERVAL '1 day');
+      ''')
+        result = conn.execute(query)
+
+        return [t[0] for t in result.fetchall()]
+
+
+def tuple_to_iptu(t):
+    return Iptu(
+        id=t[0],
+        name=t[1],
+        code=t[2],
+        address=t[3],
+        status=t[4],
+        updated_at=t[5]
+    )

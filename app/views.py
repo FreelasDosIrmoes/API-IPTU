@@ -6,7 +6,7 @@ import multiprocessing
 PATH_DEFAULT = "/api/iptu"
 
 
-@app.errorhandler(HTTPException)
+@app_flask.errorhandler(HTTPException)
 def handle_exception(e: HTTPException):
     return make_response(
         json.dumps({
@@ -16,7 +16,7 @@ def handle_exception(e: HTTPException):
     )
 
 
-@app.route(f"{PATH_DEFAULT}/", methods=['POST'])
+@app_flask.route(f"{PATH_DEFAULT}/", methods=['POST'])
 def save_iptucode():
     if request.method != "POST":
         raise MethodNotAllowed
@@ -46,7 +46,7 @@ def save_iptucode():
     }), 201
 
 
-@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
 def update_iptu(iptu_code: str):
     if request.method != 'PUT':
         raise MethodNotAllowed
@@ -74,7 +74,7 @@ def update_iptu(iptu_code: str):
     return make_response(build_request(iptu, iptu.cobranca)), 200
 
 
-@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
 def get_iptu(iptu_code: str):
     if request.method != 'GET':
         raise MethodNotAllowed
@@ -87,7 +87,7 @@ def get_iptu(iptu_code: str):
     return make_response(build_request(iptu, cobrancas))
 
 
-@app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
 def delete_iptu(iptu_code: str):
     if request.method != 'DELETE':
         raise MethodNotAllowed
@@ -101,7 +101,7 @@ def delete_iptu(iptu_code: str):
     return make_response({'message': 'IPTU deletado com sucesso'})
 
 
-@app.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
+@app_flask.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
 def get_pdf(cobranca_id):
     cobranca = Cobranca.query.get(cobranca_id)
     if cobranca is None:
@@ -114,26 +114,35 @@ def get_pdf(cobranca_id):
 automation_status = multiprocessing.Value("i", 0)
 
 
-@app.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
+@app_flask.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
 def trigger_process():
     if request.method != 'POST':
         raise MethodNotAllowed
     if automation_status.value == 1:
         return {"message": "Automaçao rodando"}, 409
     automation_status.value = 1
-    iptus = Iptu.query.filter_by(status="WAITING").all()
-    cobrancas = []
-    for iptu in iptus:
+    iptu_ids = query_to_get_iptu_late(app_flask)
+    for id in iptu_ids:
         try:
+            iptu = Iptu.query.get(id)
             cobrancas_to = process_extract_data(iptu)
+            if len(cobrancas_to) == 0:
+                print("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
+                continue
             cobrancas = create_cobranca(cobrancas_to, iptu)
+
+            cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
+
+            [db.session.delete(cobranca_db) for cobranca_db in cobrancas_db]
+
             [db.session.add(cobranca) for cobranca in cobrancas]
+
+            iptu.status = "DONE"
+            iptu.updated_at = datetime.now()
             db.session.commit()
 
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e
-        iptu.status = "DONE"
-        db.session.commit()
-        automation_status.value = 0
-    return make_response([{"id": data.id, "total": data.total} for data in cobrancas])
+    automation_status.value = 0
+    return {"message": "Automaçao finalizada"}, 201
