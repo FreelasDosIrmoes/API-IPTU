@@ -70,3 +70,30 @@ def validate_fields_put(data: dict):
     if 'number' not in data['owner']:
         errors.append("Campo 'number' não informado")
     return len(errors) == 0, errors
+
+
+def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
+    return {
+        'id': iptu.id,
+        'name': iptu.name,
+        'code': iptu.code,
+        'status': iptu.status,
+        'dono': {
+            'nome': iptu.dono.nome if iptu.dono else None,
+            'email': iptu.dono.email if iptu.dono else None,
+            'numero': iptu.dono.numero if iptu.dono else None
+        },
+        'cobrancas': [
+            {
+                'id': cobranca.id,
+                'ano': cobranca.ano,
+                'cota': cobranca.cota,
+                'multa': cobranca.multa,
+                'outros': cobranca.outros,
+                'total': cobranca.total,
+                'pdf': f"/api/iptu/pdf/{cobranca.id}" if cobranca.pdf else None
+            }
+            for cobranca in cobrancas
+        ],
+        'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
+    }

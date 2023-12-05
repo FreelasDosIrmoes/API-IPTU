@@ -1,8 +1,6 @@
-import app
 from werkzeug.exceptions import *
 from app import *
 import multiprocessing
-import time
 
 PATH_DEFAULT = "/api/iptu"
 
@@ -40,6 +38,7 @@ def save_iptucode():
         }
     }), 201
 
+
 @app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
 def update_iptu(iptu_code: str):
     if request.method != 'PUT':
@@ -62,6 +61,7 @@ def update_iptu(iptu_code: str):
         }
     }), 200
 
+
 @app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
 def get_iptu(iptu_code: str):
     if request.method != 'GET':
@@ -72,32 +72,7 @@ def get_iptu(iptu_code: str):
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
 
-    response_json = {
-        'id': iptu.id,
-        'name': iptu.name,
-        'code': iptu.code,
-        'address': iptu.address,
-        'status': iptu.status,
-        'dono': {
-            'nome': iptu.dono.nome if iptu.dono else None,
-            'telefone': iptu.dono.telefone if iptu.dono else None
-        },
-        'cobrancas': [
-            {
-                'id': cobranca.id,
-                'ano': cobranca.ano,
-                'cota': cobranca.cota,
-                'multa': cobranca.multa,
-                'outros': cobranca.outros,
-                'total': cobranca.total,
-                'pdf': f"/api/iptu/pdf/{cobranca.id}" if cobranca.pdf else None
-            }
-            for cobranca in cobrancas
-        ],
-        'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
-    }
-
-    return make_response(response_json)
+    return make_response(build_request(iptu, cobrancas))
 
 
 @app.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
@@ -122,8 +97,8 @@ def get_pdf(cobranca_id):
     return pdf_data, 200, {'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=arquivo.pdf'}
 
 
-
 automation_status = multiprocessing.Value("i", 0)
+
 
 @app.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
 def trigger_process():
@@ -133,10 +108,11 @@ def trigger_process():
         return {"message": "Automaçao rodando"}, 409
     automation_status.value = 1
     iptus = Iptu.query.filter_by(status="WAITING").all()
+    cobrancas = []
     for iptu in iptus:
         try:
-            cobrancasTO = process_extract_data(iptu)
-            cobrancas = create_cobranca(cobrancasTO, iptu)
+            cobrancas_to = process_extract_data(iptu)
+            cobrancas = create_cobranca(cobrancas_to, iptu)
             [db.session.add(cobranca) for cobranca in cobrancas]
             db.session.commit()
 

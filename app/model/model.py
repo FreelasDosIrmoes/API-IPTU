@@ -18,6 +18,7 @@ class Iptu(db.Model):
 
 class Dono(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100))
     email = db.Column(db.String(100))
     numero = db.Column(db.String(20), nullable=False)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
