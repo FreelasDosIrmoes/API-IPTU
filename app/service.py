@@ -18,63 +18,6 @@ def process_extract_data(iptu: Iptu):
     previous = previous if previous else []
     current = current if current else []
     return previous + current
-    # return [
-    #     {
-    #         "ano": "2023",
-    #         "cota": "01 IPTU/TLP",
-    #         "multa": "9.16",
-    #         "outros": "0.0",
-    #         "total": "107.1",
-    #         "iptu_id": "8",
-    #         "pdf": None
-    #     },
-    #     {
-    #         "ano": "2023",
-    #         "cota": "02 IPTU/TLP",
-    #         "multa": "9.16",
-    #         "outros": "0.0",
-    #         "total": "106.02",
-    #         "iptu_id": "8",
-    #         "pdf": None
-    #     },
-    #     {
-    #         "ano": "2023",
-    #         "cota": "03 IPTU/TLP",
-    #         "multa": "9.16",
-    #         "outros": "0.0",
-    #         "total": "104.94",
-    #         "iptu_id": "8",
-    #         "pdf": None
-    #     },
-    #     {
-    #         "ano": "2023",
-    #         "cota": "04 IPTU/TLP",
-    #         "multa": "9.16",
-    #         "outros": "0.0",
-    #         "total": "103.79",
-    #         "iptu_id": "8",
-    #         "pdf": None
-    #     },
-    #     {
-    #         "ano": "2023",
-    #         "cota": "05 IPTU/TLP",
-    #         "multa": "9.16",
-    #         "outros": "0.0",
-    #         "total": "102.82",
-    #         "iptu_id": "8",
-    #         "pdf": None
-    #     },
-    #     # {
-    #     #     "ano": "2023",
-    #     #     "cota": "06 IPTU/TLP",
-    #     #     "multa": "9.17",
-    #     #     "outros": "0.0",
-    #     #     "total": "101.87",
-    #     #     "iptu_id": "8",
-    #     #     "pdf": None
-    #     # }
-    # ]
-
 
 
 def create_cobranca(data: list[dict], iptu: Iptu):
