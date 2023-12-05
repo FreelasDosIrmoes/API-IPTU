@@ -1,3 +1,4 @@
+import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
 import multiprocessing
@@ -24,10 +25,16 @@ def save_iptucode():
     ok, err = validate_fields_post(data)
     if not ok:
         return make_response(jsonify({"erro": err})), 400
+
     iptu, dono = build_iptu_and_dono(data)
-    db.session.add(iptu)
-    db.session.add(dono)
-    db.session.commit()
+
+    try:
+        db.session.add(iptu)
+        db.session.add(dono)
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise BadRequest(e.orig.args[0])
+
     return make_response({
         "id": iptu.id,
         "code": iptu.code,
