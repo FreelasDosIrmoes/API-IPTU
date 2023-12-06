@@ -42,7 +42,7 @@ class Automation:
     self.put_info_web(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      return self.extract_data_web(owner, flg_atual = True)
+      return self.extract_data_web(owner)
   
   def process_flux_previous_years(self, code, owner):
   # fluxo do processo de automação dos anos anteriores
@@ -50,7 +50,7 @@ class Automation:
     self.put_info_web_last_years(code)
     self.passed_on_captcha()
     if self.click_on_buttom():
-      return self.extract_data_web(owner, flg_atual = False)
+      return self.extract_data_web(owner)
 
   def init_browser(self):
     #login no site
@@ -97,7 +97,7 @@ class Automation:
     else:
       Log(self.route).error_msg(solver.error_code)
 
-  def extract_data_web(self, owner, flg_atual):
+  def extract_data_web(self, owner):
     # extrair os dados do site 
     sleep(2)
     flg_inconsistente = False
@@ -124,7 +124,7 @@ class Automation:
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
-      get_data_table(self.driver, table_data, row, column, flg_atual)
+      get_data_table(self.driver, table_data, row, column)
         
       return table_data, flg_inconsistente   
     else:
@@ -132,7 +132,7 @@ class Automation:
       num = ceil(qtd_page / 10)
       
       for i in range(num):
-        get_data_table(self.driver, table_data, row, column, flg_atual)
+        get_data_table(self.driver, table_data, row, column)
         
         click_next_page(self.driver)
         

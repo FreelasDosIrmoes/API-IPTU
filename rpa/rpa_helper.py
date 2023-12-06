@@ -27,7 +27,7 @@ def verify_owner(owner, xpath_owner, driver):
         return True
     return False
 
-def build_dict(dict, col, data, flg_atual):
+def build_dict(dict, col, data):
     ano_atual = str(datetime.now().year)
     
     data_atual = datetime.now()
@@ -37,7 +37,7 @@ def build_dict(dict, col, data, flg_atual):
     elif col == 2:
         dict['cota'] = data
         
-        if not flg_atual:
+        if dict['ano'] != ano_atual:
             dict['a_vencer'] = False
         else:
             if '01' in data:
@@ -114,7 +114,7 @@ def verify_data(table_data: list[dict]):
         if data['pdf_byte'] == b'':
             raise Exception("o dicionário", data, "possui o campo 'pdf_byte' vazio.")
 
-def get_data_table(driver, table_data, row, column, flg_atual):  
+def get_data_table(driver, table_data, row, column):  
     while check_exists_by_xpath(get_xpath_table(row, column), driver):
         dict = {}
         
@@ -127,7 +127,7 @@ def get_data_table(driver, table_data, row, column, flg_atual):
             process_pdf(dict, driver, row)
             break
           
-          build_dict(dict,column, label_column, flg_atual)
+          build_dict(dict,column, label_column)
 
           column += 1
 
