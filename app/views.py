@@ -111,39 +111,4 @@ def get_pdf(cobranca_id):
     return pdf_data, 200, {'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=arquivo.pdf'}
 
 
-automation_status = multiprocessing.Value("i", 0)
 
-
-@app_flask.route(f"{PATH_DEFAULT}/trigger", methods=['POST'])
-def trigger_process():
-    if request.method != 'POST':
-        raise MethodNotAllowed
-    if automation_status.value == 1:
-        return {"message": "Automaçao rodando"}, 409
-    automation_status.value = 1
-    iptu_ids = query_to_get_iptu_late(app_flask)
-    for id in iptu_ids:
-        try:
-            iptu = Iptu.query.get(id)
-            cobrancas_to = process_extract_data(iptu)
-            if len(cobrancas_to) == 0:
-                Log(request.path).error_msg("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
-                continue
-            cobrancas = create_cobranca(cobrancas_to, iptu)
-
-            cobrancas_db = Cobranca.query.filter_by(iptu=iptu).all()
-
-            [db.session.delete(cobranca_db) for cobranca_db in cobrancas_db]
-
-            [db.session.add(cobranca) for cobranca in cobrancas]
-
-            iptu.status = "DONE"
-            iptu.updated_at = datetime.now()
-            db.session.commit()
-
-        except Exception as e:
-            Log(request.url).error_msg(e)
-            raise e
-        finally:
-            automation_status.value = 0
-    return {"message": "Automaçao finalizada"}, 201
