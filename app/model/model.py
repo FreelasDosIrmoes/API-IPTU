@@ -9,17 +9,18 @@ class Iptu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     code = db.Column(db.String(10), unique=True, nullable=False)
-    address = db.Column(db.String(100))
     status = db.Column(db.String(20))
-    dono = db.relationship("Dono", uselist=False, backref="iptu")
-    cobranca = db.relationship("Cobranca", backref="iptu")
+    inconsistent = db.Column(db.Boolean, default=False)
+    dono = db.relationship("Dono", cascade="all,delete", uselist=False, backref="iptu")
+    cobranca = db.relationship("Cobranca", cascade="all,delete", backref="iptu")
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
 
 class Dono(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100))
     email = db.Column(db.String(100))
-    numero = db.Column(db.String(20), unique=True, nullable=False)
+    numero = db.Column(db.String(20), nullable=False)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 

@@ -1,7 +1,7 @@
+import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
 import multiprocessing
-import time
 
 PATH_DEFAULT = "/api/iptu"
 
@@ -16,48 +16,89 @@ def handle_exception(e: HTTPException):
     )
 
 
-@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['POST', 'GET'])
-def save_iptucode(iptu_code: str):
-    if request.method == "POST":
-        db.session.add(Iptu(code=iptu_code, status="WAITING"))
+@app_flask.route(f"{PATH_DEFAULT}/", methods=['POST'])
+def save_iptucode():
+    if request.method != "POST":
+        raise MethodNotAllowed
+    data = request.get_json()
+
+    ok, err = validate_fields_post(data)
+    if not ok:
+        return make_response(jsonify({"erro": err})), 400
+
+    iptu, dono = build_iptu_and_dono(data)
+
+    try:
+        db.session.add(iptu)
+        db.session.add(dono)
         db.session.commit()
-        return make_response({
-            "iptu_code": iptu_code,
-            "status": "WAITING"
-        })
-    if request.method == "GET":
-        iptu = Iptu.query.filter_by(code=iptu_code).first()
-        cobrancas = Cobranca.query.filter_by(iptu=iptu).all()
+    except sqlalchemy.exc.IntegrityError as e:
+        raise BadRequest(e.orig.args[0])
 
-        if iptu is None:
-            return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
-
-        response_json = {
-            'id': iptu.id,
-            'name': iptu.name,
-            'code': iptu.code,
-            'address': iptu.address,
-            'status': iptu.status,
-            'dono': {
-                'nome': iptu.dono.nome if iptu.dono else None,
-                'telefone': iptu.dono.telefone if iptu.dono else None
-            },
-            'cobrancas': [
-                {
-                    'id': cobranca.id,
-                    'ano': cobranca.ano,
-                    'cota': cobranca.cota,
-                    'multa': cobranca.multa,
-                    'outros': cobranca.outros,
-                    'total': cobranca.total,
-                    'pdf': f"/api/iptu/pdf/{cobranca.id}" if cobranca.pdf else None
-                }
-                for cobranca in cobrancas
-            ],
-            'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
+    return make_response({
+        "id": iptu.id,
+        "code": iptu.code,
+        "name": iptu.name,
+        "dono": {
+            "email": dono.email,
+            "numero": dono.numero
         }
+    }), 201
 
-        return make_response(response_json)
+
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
+def update_iptu(iptu_code: str):
+    if request.method != 'PUT':
+        raise MethodNotAllowed
+
+    data = request.get_json()
+    ok, err = validate_fields_put(data)
+    if not ok:
+        return make_response(jsonify({"errors": err})), 400
+
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+
+    iptu.code = data['code']
+    iptu.name = data['name']
+    iptu.dono.email = data['owner']['email']
+    iptu.dono.numero = data['owner']['number']
+    iptu.dono.nome = data['owner']['name']
+    try:
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest(str(e))
+
+    return make_response(build_request(iptu, iptu.cobranca)), 200
+
+
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
+def get_iptu(iptu_code: str):
+    if request.method != 'GET':
+        raise MethodNotAllowed
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+    cobrancas = Cobranca.query.filter_by(iptu=iptu).all()
+
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+
+    return make_response(build_request(iptu, cobrancas))
+
+
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
+def delete_iptu(iptu_code: str):
+    if request.method != 'DELETE':
+        raise MethodNotAllowed
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+
+    db.session.delete(iptu)
+    db.session.commit()
+    return make_response({'message': 'IPTU deletado com sucesso'})
 
 
 @app_flask.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
@@ -80,13 +121,13 @@ def trigger_process():
     if automation_status.value == 1:
         return {"message": "Automaçao rodando"}, 409
     automation_status.value = 1
-    iptus = query_to_get_iptu_late(app_flask)
-    for iptu in iptus:
+    iptu_ids = query_to_get_iptu_late(app_flask)
+    for id in iptu_ids:
         try:
-            iptu = Iptu.query.get(iptu.id)
+            iptu = Iptu.query.get(id)
             cobrancas_to = process_extract_data(iptu)
             if len(cobrancas_to) == 0:
-                print("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
+                Log(request.path).error_msg("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
                 continue
             cobrancas = create_cobranca(cobrancas_to, iptu)
 
@@ -103,5 +144,6 @@ def trigger_process():
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e
-    automation_status.value = 0
+        finally:
+            automation_status.value = 0
     return {"message": "Automaçao finalizada"}, 201
