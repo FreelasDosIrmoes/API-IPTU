@@ -106,7 +106,7 @@ class Automation:
       label_click = self.driver.find_element(By.XPATH, expand_table)
       label_click.click()  
 
-    if (owner != '' and owner is not None) and verify_owner(owner, xpath_label_name, self.driver):
+    if (owner != '' and owner is not None) and not verify_owner(owner, xpath_label_name, self.driver):
       flg_inconsistente = True
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
@@ -132,7 +132,7 @@ class Automation:
       num = ceil(qtd_page / 10)
       
       for i in range(num):
-        get_data_table(self.driver, table_data, row, column)
+        get_data_table(self.driver, table_data, row, column, flg_atual)
         
         click_next_page(self.driver)
         
