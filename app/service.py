@@ -205,11 +205,10 @@ def process_iptu(engine, iptu):
             delete_existing_cobrancas(connection, iptu)
 
             cobrancas = create_cobrancas(cobrancas_to, iptu)
-            for c in cobrancas:
-                print(c)
-                for d in c:
-                    print(d, type(d))
+
             insert_cobrancas(connection, cobrancas)
+
+            #TODO VERIFICAR SE O IPTU TEM STATUS == WAITING, SE TIVER EU MANDO PRA API DE MENSAGERIA
 
             update_iptu(connection, is_inconsistent, iptu.id)
 
@@ -230,7 +229,7 @@ def delete_existing_cobrancas(connection, iptu):
 def update_iptu(connection, is_inconsistent: bool, iptu_id: int):
     query = text(
         f'''UPDATE iptu SET status = 'DONE', 
-                updated_at = '{datetime.now()}', 
-                inconsistent = {is_inconsistent} 
+                inconsistent = {is_inconsistent},
+                updated_at = now()
                 WHERE id = {iptu_id};''')
     connection.execute(query)
