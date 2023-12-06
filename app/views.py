@@ -127,7 +127,7 @@ def trigger_process():
             iptu = Iptu.query.get(id)
             cobrancas_to = process_extract_data(iptu)
             if len(cobrancas_to) == 0:
-                print("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
+                Log(request.path).error_msg("AUTOMAÇAO RETORNOU UMA LISTA VAZIA")
                 continue
             cobrancas = create_cobranca(cobrancas_to, iptu)
 
@@ -144,5 +144,6 @@ def trigger_process():
         except Exception as e:
             Log(request.url).error_msg(e)
             raise e
-    automation_status.value = 0
+        finally:
+            automation_status.value = 0
     return {"message": "Automaçao finalizada"}, 201
