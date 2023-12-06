@@ -4,6 +4,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from rpa.variables import *
 from time import sleep
+from datetime import datetime
 
 
 def check_exists_by_xpath(xpath, driver):
@@ -27,10 +28,39 @@ def verify_owner(owner, xpath_owner, driver):
     return False
 
 def build_dict(dict, col, data):
+    ano_atual = str(datetime.now().year)
+    
+    data_atual = datetime.now()
+
     if col == 1:
         dict['ano'] = data
     elif col == 2:
         dict['cota'] = data
+        
+        if dict['ano'] != ano_atual:
+            dict['a_vencer'] = False
+        else:
+            if '01' in data:
+                data_cobranca = f'01/05/{ano_atual}'
+            elif '02' in data:
+                data_cobranca = f'01/06/{ano_atual}'
+            elif '03' in data:
+                data_cobranca = f'01/07/{ano_atual}'
+            elif '04' in data:
+                data_cobranca = f'01/08/{ano_atual}'
+            elif '05' in data:
+                data_cobranca = f'01/09/{ano_atual}'
+            elif '06' in data:
+                data_cobranca = f'01/10/{ano_atual}'
+                
+            data_cobranca = datetime.strptime(data_cobranca, '%d/%m/%Y')
+            if data_cobranca <= data_atual:
+                dict['a_vencer'] = False
+            elif data_cobranca > data_atual:
+                dict['a_vencer'] = True
+            else:
+                dict['a_vencer'] = False
+        
     elif col == 3:
         dict['valor'] = data
     elif col == 4:

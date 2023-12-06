@@ -100,13 +100,14 @@ class Automation:
   def extract_data_web(self, owner):
     # extrair os dados do site 
     sleep(2)
+    flg_inconsistente = False
     
     if check_exists_by_xpath(expand_table, self.driver):
       label_click = self.driver.find_element(By.XPATH, expand_table)
       label_click.click()  
 
     if (owner != '' and owner is not None) and not verify_owner(owner, xpath_label_name, self.driver):
-      return
+      flg_inconsistente = True
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
@@ -125,8 +126,7 @@ class Automation:
       # caso com menos ou igual a 10 débitos na página
       get_data_table(self.driver, table_data, row, column)
         
-      return table_data
-        
+      return table_data, flg_inconsistente   
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
@@ -136,7 +136,7 @@ class Automation:
         
         click_next_page(self.driver)
         
-      return table_data
+      return table_data, flg_inconsistente
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
