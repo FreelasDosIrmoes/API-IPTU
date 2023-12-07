@@ -8,7 +8,8 @@ from app import db
 from utils.log import Log
 from rpa.rpa import Automation
 from sqlalchemy import create_engine, text
-
+from time import sleep
+import threading
 
 def process_extract_data(iptu: Iptu):
     start_process = datetime.now()
@@ -20,8 +21,6 @@ def process_extract_data(iptu: Iptu):
     previous = previous if previous else []
     current = current if current else []
     return previous + current, is_inconsistent_current or is_inconsistent_previous
-    # with open('mock.txt', 'r') as f:
-    #     return eval(f.read()), False
 
 
 def create_cobrancas(data: list[dict], iptu: Iptu):
@@ -161,33 +160,26 @@ def tuple_to_iptu(t):
     )
 
 
+
+
 def schedule_process(app_flask):
-    schedule.every(1).second.do(trigger_process, app_flask)
-    while True:
-        schedule.run_pending()
+    with threading.Lock():
+        while True:
+            trigger_process(app_flask)
+            sleep(5)
 
-
-automation_status = multiprocessing.Value("i", 0)
 
 
 def trigger_process(app_flask):
-    if automation_status.value == 1:
-        return {"message": "Automação em execução"}, 409
 
-    automation_status.value = 1
+    engine = get_engine(app_flask)
+    iptu_ids = query_to_get_iptu_late(engine)
 
-    try:
-        engine = get_engine(app_flask)
-        iptu_ids = query_to_get_iptu_late(engine)
+    for iptu_id in iptu_ids:
+        process_iptu(engine, iptu_id)
 
-        for iptu_id in iptu_ids:
-            print(iptu_id)
-            process_iptu(engine, iptu_id)
 
-    finally:
-        automation_status.value = 0
-
-    return {"message": "Automação finalizada"}, 201
+    return
 
 
 from sqlalchemy import text
@@ -215,9 +207,11 @@ def process_iptu(engine, iptu):
             update_iptu(connection, is_inconsistent, iptu.id)
 
             transaction.commit()
+            connection.close()
 
         except Exception as e:
             transaction.rollback()
+            connection.close()
             Log().error_msg(e)
             raise e
 

@@ -1,3 +1,5 @@
+import threading
+
 from flask import *
 from app.model.model import *
 import os
@@ -18,6 +20,6 @@ app_flask.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:postgres@{
 app_flask.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app_flask)
 migrate = Migrate(app_flask, db)
-
+threading.Thread(target=schedule_process, args=(app_flask,)).start()
 
 from app import views

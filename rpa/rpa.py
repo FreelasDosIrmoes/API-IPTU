@@ -92,7 +92,7 @@ class Automation:
       # g-recaptcha-response
 
       self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
-      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].B.B.callback('{g_response}')")
       final_captcha = datetime.now()
       
       Log(self.route).time_captcha(final_captcha-start_captcha)
