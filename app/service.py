@@ -11,17 +11,17 @@ from sqlalchemy import create_engine, text
 
 
 def process_extract_data(iptu: Iptu):
-    # start_process = datetime.now()
-    # robot = Automation()
-    # previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, '')
-    # current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, '')
-    # finish_process = datetime.now()
-    # Log().time_all_process(finish_process - start_process)
-    # previous = previous if previous else []
-    # current = current if current else []
-    # return previous + current, is_inconsistent_current or is_inconsistent_previous
-    with open('mock.txt', 'r') as f:
-        return eval(f.read()), False
+    start_process = datetime.now()
+    robot = Automation()
+    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, '')
+    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, '')
+    finish_process = datetime.now()
+    Log().time_all_process(finish_process - start_process)
+    previous = previous if previous else []
+    current = current if current else []
+    return previous + current, is_inconsistent_current or is_inconsistent_previous
+    # with open('mock.txt', 'r') as f:
+    #     return eval(f.read()), False
 
 
 def create_cobrancas(data: list[dict], iptu: Iptu):
@@ -49,7 +49,7 @@ def remove_common(var: str):
 def insert_cobrancas(connection, cobrancas: list[tuple]):
     for cobranca in cobrancas:
         query = text(
-            '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf) 
+            '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf, updated_at)
             VALUES (
                 :ano,
                 :cota,
@@ -57,7 +57,8 @@ def insert_cobrancas(connection, cobrancas: list[tuple]):
                 :outros,
                 :total,
                 :iptu_id,
-                :pdf
+                :pdf,
+                now()
                 )'''
         )
         connection.execute(query, {"ano": cobranca[0], "cota": cobranca[1], "multa": cobranca[2], "outros": cobranca[3],
@@ -134,7 +135,7 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
 
 def get_engine(app_flask) -> Engine:
     with app_flask.app_context():
-        return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'], echo=True)
+        return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'])
 
 
 def query_to_get_iptu_late(engine):
@@ -161,7 +162,7 @@ def tuple_to_iptu(t):
 
 
 def schedule_process(app_flask):
-    schedule.every(1).minutes.do(trigger_process, app_flask)
+    schedule.every(1).second.do(trigger_process, app_flask)
     while True:
         schedule.run_pending()
 
@@ -180,6 +181,7 @@ def trigger_process(app_flask):
         iptu_ids = query_to_get_iptu_late(engine)
 
         for iptu_id in iptu_ids:
+            print(iptu_id)
             process_iptu(engine, iptu_id)
 
     finally:

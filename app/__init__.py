@@ -19,9 +19,5 @@ app_flask.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app_flask)
 migrate = Migrate(app_flask, db)
 
-# with app.app_context():
-#     db.drop_all()
-#     db.create_all()
-
 
 from app import views

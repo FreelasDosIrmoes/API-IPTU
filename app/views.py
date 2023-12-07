@@ -1,7 +1,6 @@
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-import multiprocessing
 
 PATH_DEFAULT = "/api/iptu"
 
