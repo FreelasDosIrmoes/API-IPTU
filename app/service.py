@@ -163,10 +163,9 @@ def tuple_to_iptu(t):
 
 
 def schedule_process(app_flask):
-    with threading.Lock():
-        while True:
-            trigger_process(app_flask)
-            sleep(5)
+    while True:
+        trigger_process(app_flask)
+        sleep(5)
 
 
 
@@ -191,10 +190,6 @@ def process_iptu(engine, iptu):
 
         try:
             cobrancas_to, is_inconsistent = process_extract_data(iptu)
-
-            if not cobrancas_to:
-                Log().error_msg(f"AUTOMAÇÃO RETORNOU UMA LISTA VAZIA PARA O CODIGO: {iptu.code}")
-                return
 
             delete_existing_cobrancas(connection, iptu)
 

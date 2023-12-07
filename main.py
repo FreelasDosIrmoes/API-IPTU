@@ -2,7 +2,6 @@ import multiprocessing
 import threading
 
 from app import app_flask
-from app.service import schedule_process, trigger_process
 from rpa.rpa import Automation
 
 if __name__ == "__main__":
