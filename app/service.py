@@ -177,7 +177,6 @@ def trigger_process(app_flask):
     for iptu_id in iptu_ids:
         process_iptu(engine, iptu_id)
 
-
     return
 
 
@@ -197,7 +196,9 @@ def process_iptu(engine, iptu):
 
             insert_cobrancas(connection, cobrancas)
 
-            #TODO VERIFICAR SE O IPTU TEM STATUS == WAITING, SE TIVER EU MANDO PRA API DE MENSAGERIA
+            receiver_message = must_send_message_to(connection)
+            if not is_inconsistent and len(receiver_message) > 0:
+                send_email(iptu)
 
             update_iptu(connection, is_inconsistent, iptu.id)
 
@@ -224,3 +225,13 @@ def update_iptu(connection, is_inconsistent: bool, iptu_id: int):
                 updated_at = now()
                 WHERE id = {iptu_id};''')
     connection.execute(query)
+
+def must_send_message_to(connection) -> list[Iptu]:
+    query = text(
+        f'''select * from iptu i where i.last_message is null or extract(day from age(i.last_message)) >= 3;'''
+    )
+    result = connection.execute(query)
+    return result.fetchall()
+
+def send_email(iptu):
+    pass
