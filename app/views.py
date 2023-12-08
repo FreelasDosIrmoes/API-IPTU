@@ -17,6 +17,43 @@ def handle_exception(e: HTTPException):
 
 @app_flask.route(f"{PATH_DEFAULT}/", methods=['POST'])
 def save_iptucode():
+    """
+        Save IPTU
+        ---
+        parameters:
+          - name: data
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: IPTU code
+                  example: "12345678"
+                name:
+                  type: string
+                  description: IPTU name
+                  example: Teste
+                owner:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Owner name
+                      example: Teste
+                    email:
+                      type: string
+                      description: Owner email
+                      example:
+                    number:
+                      type: string
+                      description: Owner number
+                      example: 12345678
+        responses:
+          201:
+            description: Successful operation
+        """
     if request.method != "POST":
         raise MethodNotAllowed
     data = request.get_json()
@@ -47,6 +84,43 @@ def save_iptucode():
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
 def update_iptu(iptu_code: str):
+    """
+     Update IPTU by code
+     ---
+     parameters:
+       - name: iptu_code
+         in: path
+         type: string
+         required: true
+         description: IPTU code
+       - name: data
+         in: body
+         required: true
+         schema:
+           type: object
+           properties:
+             code:
+               type: string
+               description: New code for the IPTU
+             name:
+               type: string
+               description: New name for the IPTU
+             owner:
+               type: object
+               properties:
+                 email:
+                   type: string
+                   description: Email of the owner
+                 number:
+                   type: string
+                   description: Number of the owner
+                 name:
+                   type: string
+                   description: Name of the owner
+     responses:
+       200:
+         description: Successful operation
+    """
     if request.method != 'PUT':
         raise MethodNotAllowed
 
@@ -75,6 +149,40 @@ def update_iptu(iptu_code: str):
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
 def get_iptu(iptu_code: str):
+    """
+        Get IPTU by code
+        ---
+        parameters:
+          - name: iptu_code
+            in: path
+            type: string
+            required: true
+            description: IPTU code
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID of the IPTU
+                code:
+                  type: string
+                  description: Code of the IPTU
+                name:
+                  type: string
+                  description: Name of the IPTU
+                dono:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      description: Email of the owner
+                    numero:
+                      type: string
+                      description: Number of the owner
+        """
     if request.method != 'GET':
         raise MethodNotAllowed
     iptu = Iptu.query.filter_by(code=iptu_code).first()
@@ -88,6 +196,25 @@ def get_iptu(iptu_code: str):
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
 def delete_iptu(iptu_code: str):
+    """
+        Delete IPTU by code
+        ---
+        parameters:
+          - name: iptu_code
+            in: path
+            type: string
+            required: true
+            description: IPTU code
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Deletion success message
+        """
     if request.method != 'DELETE':
         raise MethodNotAllowed
     iptu = Iptu.query.filter_by(code=iptu_code).first()
@@ -102,6 +229,32 @@ def delete_iptu(iptu_code: str):
 
 @app_flask.route(f"{PATH_DEFAULT}/pdf/<int:cobranca_id>")
 def get_pdf(cobranca_id):
+    """
+        Get PDF for a specific Cobranca
+        ---
+        parameters:
+          - name: cobranca_id
+            in: path
+            type: integer
+            required: true
+            description: ID of the Cobranca
+        responses:
+          200:
+            description: Successful operation
+            content:
+              application/pdf:
+                schema:
+                  type: file
+            headers:
+              Content-Type:
+                type: string
+                description: Mime type of the file (application/pdf)
+              Content-Disposition:
+                type: string
+                description: Attachment with the filename (arquivo.pdf)
+        400:
+          description: Cobrança not found
+        """
     cobranca = Cobranca.query.get(cobranca_id)
     if cobranca is None:
         return jsonify({'erro': 'Cobrança não encontrado'}), 400
@@ -110,4 +263,37 @@ def get_pdf(cobranca_id):
     return pdf_data, 200, {'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=arquivo.pdf'}
 
 
-
+@app_flask.route(f"{PATH_DEFAULT}/<iptu_code>/inconsistent", methods=['PATCH'])
+def update_inconsistent(iptu_code):
+    """
+        Update IPTU inconsistency status by code
+        ---
+        parameters:
+          - name: iptu_code
+            in: path
+            type: string
+            required: true
+            description: IPTU code
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Update success message
+        400:
+          description: IPTU not found
+        """
+    if request.method != 'PATCH':
+        raise MethodNotAllowed
+    iptu = Iptu.query.filter_by(code=iptu_code).first()
+    if iptu is None:
+        return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
+    iptu.inconsistent = False
+    try:
+        db.session.commit()
+    except Exception as e:
+        raise BadRequest(str(e))
+    return make_response({'message': 'IPTU atualizado com sucesso'}), 200

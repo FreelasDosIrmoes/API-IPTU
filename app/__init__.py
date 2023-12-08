@@ -1,6 +1,6 @@
 import threading
 
-from flask import *
+from flask import Flask, request, make_response, json
 from app.model.model import *
 import os
 from dotenv import load_dotenv
@@ -9,6 +9,8 @@ from app.service import *
 from datetime import datetime
 from rpa.rpa import Automation
 from utils.log import Log
+from flasgger import Swagger
+
 
 load_dotenv()
 DB_NAME = os.getenv('DB_NAME')
@@ -18,8 +20,15 @@ DB_HOST = os.getenv('DB_HOST')
 app_flask = Flask(__name__)
 app_flask.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:postgres@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app_flask.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app_flask.config['SWAGGER'] = {
+    'title': 'API IPTU',
+    'uiversion': 3,
+    'version': '1.0',
+}
 db.init_app(app_flask)
 migrate = Migrate(app_flask, db)
-threading.Thread(target=schedule_process, args=(app_flask,)).start()
+
+
+swagger = Swagger(app=app_flask)
 
 from app import views

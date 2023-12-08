@@ -8,4 +8,5 @@ flask_migrate
 flask_script
 python-dotenv
 Flask-Migrate
-schedule
+flasgger
+flask_restplus
