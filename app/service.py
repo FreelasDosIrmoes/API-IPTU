@@ -1,26 +1,28 @@
-import multiprocessing
-import schedule
 from datetime import datetime
 from flask import request
 from sqlalchemy.engine import Engine
 from app.model.model import Iptu, Cobranca, Dono
-from app import db
+from app import db, API_MSG
 from utils.log import Log
 from rpa.rpa import Automation
 from sqlalchemy import create_engine, text
 from time import sleep
-import threading
+import requests
+import base64
 
-def process_extract_data(iptu: Iptu):
+def process_extract_data(iptu: Iptu, dono: Dono):
     start_process = datetime.now()
     robot = Automation()
-    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, '')
-    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, '')
+    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, dono.nome)
+    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, dono.nome)
     finish_process = datetime.now()
     Log().time_all_process(finish_process - start_process)
     previous = previous if previous else []
     current = current if current else []
     return previous + current, is_inconsistent_current or is_inconsistent_previous
+    # with open('mock.txt', 'r') as f:
+    #     data = f.read()
+    #     return eval(data), False
 
 
 def create_cobrancas(data: list[dict], iptu: Iptu):
@@ -188,7 +190,8 @@ def process_iptu(engine, iptu):
         transaction = connection.begin()
 
         try:
-            cobrancas_to, is_inconsistent = process_extract_data(iptu)
+            dono = get_dono_by_iptu(connection, iptu.id)
+            cobrancas_to, is_inconsistent = process_extract_data(iptu, dono if dono != None or dono != [] else '')
 
             delete_existing_cobrancas(connection, iptu)
 
@@ -196,9 +199,11 @@ def process_iptu(engine, iptu):
 
             insert_cobrancas(connection, cobrancas)
 
-            receiver_message = must_send_message_to(connection)
+            receiver_message = must_send_message_to(connection, iptu.id)
             if not is_inconsistent and len(receiver_message) > 0:
-                send_email(iptu)
+                cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
+
+                send_email(iptu, cobrancas, dono)
 
             update_iptu(connection, is_inconsistent, iptu.id)
 
@@ -226,12 +231,41 @@ def update_iptu(connection, is_inconsistent: bool, iptu_id: int):
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
-def must_send_message_to(connection) -> list[Iptu]:
+def must_send_message_to(connection, iptu_id) -> list[Iptu]:
     query = text(
-        f'''select * from iptu i where i.last_message is null or extract(day from age(i.last_message)) >= 3;'''
+        f'''select * from iptu i where i.id = {iptu_id} and       
+        ( i.last_message is null or extract(day from age(i.last_message))  >= 3 );'''
     )
     result = connection.execute(query)
     return result.fetchall()
 
-def send_email(iptu):
-    pass
+
+def get_all_cobrancas_by_iptu(connection, iptu_id: int) -> list[Cobranca]:
+    query = text(
+        f'''select * from cobranca c where c.iptu_id = {iptu_id};'''
+    )
+    result = connection.execute(query)
+    return result.fetchall()
+
+
+def get_dono_by_iptu(connection, iptu_id: int) -> Dono:
+    query = text(
+        f'''select * from dono d where d.iptu_id = {iptu_id};'''
+    )
+    result = connection.execute(query)
+    return result.fetchone()
+
+
+def send_email(iptu, cobrancas, dono):
+    body = {
+        "phone": dono.numero,
+        "email": dono.email,
+        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+    }
+
+    response = requests.post(API_MSG, json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")

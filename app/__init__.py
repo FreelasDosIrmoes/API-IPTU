@@ -5,7 +5,6 @@ from app.model.model import *
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from app.service import *
 from datetime import datetime
 from rpa.rpa import Automation
 from utils.log import Log
@@ -16,6 +15,7 @@ load_dotenv()
 DB_NAME = os.getenv('DB_NAME')
 DB_PORT = os.getenv('DB_PORT')
 DB_HOST = os.getenv('DB_HOST')
+API_MSG = os.getenv('API_MSG')
 
 app_flask = Flask(__name__)
 app_flask.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:postgres@{DB_HOST}:{DB_PORT}/{DB_NAME}'

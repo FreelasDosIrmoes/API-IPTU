@@ -1,12 +1,13 @@
 import multiprocessing
 import threading
 
-from app import app_flask, schedule_process
+from app import app_flask
+from app.service import schedule_process
 from rpa.rpa import Automation
 
 if __name__ == "__main__":
     threading.Thread(target=schedule_process, args=(app_flask,)).start()
-    app_flask.run(debug=False, port=5000)
+    app_flask.run(debug=False, port=5001)
 
 
 #

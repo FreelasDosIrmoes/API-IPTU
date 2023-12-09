@@ -1,7 +1,15 @@
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-
+from app.service import validate_fields_put
+from app.service import validate_fields_post
+from app.service import build_iptu_and_dono
+from app.service import build_request
+from app.model.model import *
+from flask import jsonify
+from flask import request
+from flask import make_response
+from flask import json
 PATH_DEFAULT = "/api/iptu"
 
 
@@ -136,9 +144,16 @@ def update_iptu(iptu_code: str):
 
     iptu.code = data['code']
     iptu.name = data['name']
-    iptu.dono.email = data['owner']['email']
-    iptu.dono.numero = data['owner']['number']
-    iptu.dono.nome = data['owner']['name']
+    if iptu.dono is not None:
+        iptu.dono.email = data['owner']['email']
+        iptu.dono.numero = data['owner']['number']
+        iptu.dono.nome = data['owner']['name']
+    else:
+        dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'],
+                    iptu=iptu)
+        db.session.add(dono)
+    iptu.status = "WAITING"
+
     try:
         db.session.commit()
     except Exception as e:
