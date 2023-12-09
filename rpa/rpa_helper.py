@@ -23,9 +23,7 @@ def verify_owner(owner, xpath_owner, driver):
     if check_exists_by_xpath(xpath_owner, driver):
       name = driver.find_element(By.XPATH, xpath_owner).text
 
-      if owner == name:
-        return True
-    return False
+      return str(owner).upper() == str(name).upper()
 
 def build_dict(dict, col, data):
     ano_atual = str(datetime.now().year)
