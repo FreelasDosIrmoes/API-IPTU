@@ -8,3 +8,5 @@ flask_migrate
 flask_script
 python-dotenv
 Flask-Migrate
+flasgger
+flask_restplus

@@ -14,3 +14,6 @@ class Log:
   
   def error_msg(self, error):
     logging.error(f"{self.route} - Error encontrado: {error}")
+
+  def info_msg(self, msg):
+    logging.info(f"{self.route} - {msg}")

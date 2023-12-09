@@ -1,26 +1,36 @@
 from datetime import datetime
 from flask import request
-
+from sqlalchemy.engine import Engine
 from app.model.model import Iptu, Cobranca, Dono
+from app import db, API_MSG
 from utils.log import Log
 from rpa.rpa import Automation
 from sqlalchemy import create_engine, text
+from time import sleep
+import requests
+import base64
 
-
-def process_extract_data(iptu: Iptu):
+def process_extract_data(iptu: Iptu, dono: Dono):
     start_process = datetime.now()
     robot = Automation()
-    previous = robot.process_flux_previous_years(iptu.code, '')
-    current = robot.process_flux_current_year(iptu.code, '')
+    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, dono.nome)
+    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, dono.nome)
     finish_process = datetime.now()
-    Log(request.url).time_all_process(finish_process - start_process)
+    Log().time_all_process(finish_process - start_process)
     previous = previous if previous else []
     current = current if current else []
-    return previous + current
+    return previous + current, is_inconsistent_current or is_inconsistent_previous
+    # with open('mock.txt', 'r') as f:
+    #     data = f.read()
+    #     return eval(data), False
 
 
-def create_cobranca(data: list[dict], iptu: Iptu):
-    return [dict_to_cobranca(d, iptu) for d in data]
+def create_cobrancas(data: list[dict], iptu: Iptu):
+    list = []
+    for d in data:
+        cobranca = dict_to_cobranca(d, iptu)
+        list.append(cobranca)
+    return list
 
 
 def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
@@ -30,13 +40,30 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
     total = float(remove_common(cobranca_dict['total']))
     cota = cobranca_dict['cota']
     pdf_data = cobranca_dict['pdf_byte']
-    return Cobranca(ano=ano, multa=multa, outros=outros,
-                    total=total, cota=cota, iptu=iptu,
-                    pdf=pdf_data)
+    return (ano, cota, multa, outros, total, iptu, pdf_data)
 
 
 def remove_common(var: str):
     return var.replace(",", ".")
+
+
+def insert_cobrancas(connection, cobrancas: list[tuple]):
+    for cobranca in cobrancas:
+        query = text(
+            '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf, updated_at)
+            VALUES (
+                :ano,
+                :cota,
+                :multa,
+                :outros,
+                :total,
+                :iptu_id,
+                :pdf,
+                now()
+                )'''
+        )
+        connection.execute(query, {"ano": cobranca[0], "cota": cobranca[1], "multa": cobranca[2], "outros": cobranca[3],
+                                   "total": cobranca[4], "iptu_id": cobranca[5].id, "pdf": cobranca[6]})
 
 
 def validate_fields_post(data: dict):
@@ -107,18 +134,21 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
     }
 
 
-def query_to_get_iptu_late(app_flask):
+def get_engine(app_flask) -> Engine:
     with app_flask.app_context():
-        engine = create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'], echo=True)
-        conn = engine.connect()
-        query = text('''SELECT i.id 
-                        FROM iptu as i
-                        WHERE status = 'WAITING'
-                        OR (status <> 'WAITING' AND DATE_TRUNC('day', updated_at) = CURRENT_DATE - INTERVAL '1 day');
-      ''')
-        result = conn.execute(query)
+        return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'])
 
-        return [t[0] for t in result.fetchall()]
+
+def query_to_get_iptu_late(engine):
+    conn = engine.connect()
+    query = text('''SELECT * 
+                    FROM iptu as i
+                    WHERE status = 'WAITING'
+                    OR (status <> 'WAITING' AND DATE_TRUNC('day', updated_at) <= CURRENT_DATE - INTERVAL '1 day');
+  ''')
+    result = conn.execute(query)
+
+    return result.fetchall()
 
 
 def tuple_to_iptu(t):
@@ -126,7 +156,116 @@ def tuple_to_iptu(t):
         id=t[0],
         name=t[1],
         code=t[2],
-        address=t[3],
-        status=t[4],
-        updated_at=t[5]
+        status=t[3],
+        updated_at=t[4],
+        inconsistent=t[5]
     )
+
+
+
+
+def schedule_process(app_flask):
+    while True:
+        trigger_process(app_flask)
+        sleep(5)
+
+
+
+def trigger_process(app_flask):
+
+    engine = get_engine(app_flask)
+    iptu_ids = query_to_get_iptu_late(engine)
+
+    for iptu_id in iptu_ids:
+        process_iptu(engine, iptu_id)
+
+    return
+
+
+from sqlalchemy import text
+
+
+def process_iptu(engine, iptu):
+    with engine.connect() as connection:
+        transaction = connection.begin()
+
+        try:
+            dono = get_dono_by_iptu(connection, iptu.id)
+            cobrancas_to, is_inconsistent = process_extract_data(iptu, dono if dono != None or dono != [] else '')
+
+            delete_existing_cobrancas(connection, iptu)
+
+            cobrancas = create_cobrancas(cobrancas_to, iptu)
+
+            insert_cobrancas(connection, cobrancas)
+
+            receiver_message = must_send_message_to(connection, iptu.id)
+            if not is_inconsistent and len(receiver_message) > 0:
+                cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
+
+                send_email(iptu, cobrancas, dono)
+
+            update_iptu(connection, is_inconsistent, iptu.id)
+
+            transaction.commit()
+            connection.close()
+
+        except Exception as e:
+            transaction.rollback()
+            connection.close()
+            Log().error_msg(e)
+            raise e
+
+
+def delete_existing_cobrancas(connection, iptu):
+    query = text(
+        f"DELETE FROM cobranca as c WHERE c.iptu_id = {iptu.id};"
+    )
+    connection.execute(query)
+
+def update_iptu(connection, is_inconsistent: bool, iptu_id: int):
+    query = text(
+        f'''UPDATE iptu SET status = 'DONE', 
+                inconsistent = {is_inconsistent},
+                updated_at = now()
+                WHERE id = {iptu_id};''')
+    connection.execute(query)
+
+def must_send_message_to(connection, iptu_id) -> list[Iptu]:
+    query = text(
+        f'''select * from iptu i where i.id = {iptu_id} and       
+        ( i.last_message is null or extract(day from age(i.last_message))  >= 3 );'''
+    )
+    result = connection.execute(query)
+    return result.fetchall()
+
+
+def get_all_cobrancas_by_iptu(connection, iptu_id: int) -> list[Cobranca]:
+    query = text(
+        f'''select * from cobranca c where c.iptu_id = {iptu_id};'''
+    )
+    result = connection.execute(query)
+    return result.fetchall()
+
+
+def get_dono_by_iptu(connection, iptu_id: int) -> Dono:
+    query = text(
+        f'''select * from dono d where d.iptu_id = {iptu_id};'''
+    )
+    result = connection.execute(query)
+    return result.fetchone()
+
+
+def send_email(iptu, cobrancas, dono):
+    body = {
+        "phone": dono.numero,
+        "email": dono.email,
+        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+    }
+
+    response = requests.post(API_MSG, json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")

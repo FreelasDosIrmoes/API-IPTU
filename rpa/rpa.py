@@ -43,6 +43,7 @@ class Automation:
     self.passed_on_captcha()
     if self.click_on_buttom():
       return self.extract_data_web(owner)
+    return None, False
   
   def process_flux_previous_years(self, code, owner):
   # fluxo do processo de automação dos anos anteriores
@@ -51,6 +52,7 @@ class Automation:
     self.passed_on_captcha()
     if self.click_on_buttom():
       return self.extract_data_web(owner)
+    return None, False
 
   def init_browser(self):
     #login no site
@@ -90,7 +92,7 @@ class Automation:
       # g-recaptcha-response
 
       self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
-      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].M.M.callback('{g_response}')")
+      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].B.B.callback('{g_response}')")
       final_captcha = datetime.now()
       
       Log(self.route).time_captcha(final_captcha-start_captcha)
@@ -120,7 +122,7 @@ class Automation:
     qtd_page = self.returning_qtd_page()
 
     if qtd_page is None:
-      return []
+      return [], False
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
