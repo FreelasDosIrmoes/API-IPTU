@@ -13,8 +13,8 @@ import base64
 def process_extract_data(iptu: Iptu, dono: Dono):
     start_process = datetime.now()
     robot = Automation()
-    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, dono.nome)
-    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, dono.nome)
+    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, iptu.name)
+    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, iptu.name)
     finish_process = datetime.now()
     Log().time_all_process(finish_process - start_process)
     previous = previous if previous else []
@@ -85,7 +85,7 @@ def validate_fields_post(data: dict):
 
 def build_iptu_and_dono(data: dict[str]) -> (Iptu, Dono):
     iptu = Iptu(code=data['code'], name=data['name'], status="WAITING")
-    dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], iptu=iptu)
+    dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'], iptu=iptu)
     return iptu, dono
 
 
@@ -147,6 +147,7 @@ def query_to_get_iptu_late(engine):
                     OR (status <> 'WAITING' AND DATE_TRUNC('day', updated_at) <= CURRENT_DATE - INTERVAL '1 day');
   ''')
     result = conn.execute(query)
+    conn.close()
 
     return result.fetchall()
 
@@ -179,6 +180,8 @@ def trigger_process(app_flask):
     for iptu_id in iptu_ids:
         process_iptu(engine, iptu_id)
 
+
+
     return
 
 
@@ -202,10 +205,10 @@ def process_iptu(engine, iptu):
             receiver_message = must_send_message_to(connection, iptu.id)
             if not is_inconsistent and len(receiver_message) > 0:
                 cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
-
                 send_email(iptu, cobrancas, dono)
+                sended_message = True
 
-            update_iptu(connection, is_inconsistent, iptu.id)
+            update_iptu(connection, is_inconsistent, iptu.id, sended_message)
 
             transaction.commit()
             connection.close()
@@ -223,11 +226,11 @@ def delete_existing_cobrancas(connection, iptu):
     )
     connection.execute(query)
 
-def update_iptu(connection, is_inconsistent: bool, iptu_id: int):
+def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message: bool = False):
     query = text(
         f'''UPDATE iptu SET status = 'DONE', 
                 inconsistent = {is_inconsistent},
-                updated_at = now()
+                updated_at = now() {", last_message = now()" if sended_message else ""}
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
