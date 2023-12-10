@@ -125,7 +125,7 @@ class Automation:
     qtd_page = self.returning_qtd_page()
 
     if qtd_page is None:
-      return [], False
+      return [], False, None, None
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
