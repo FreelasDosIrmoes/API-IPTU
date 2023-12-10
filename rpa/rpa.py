@@ -115,7 +115,7 @@ class Automation:
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
       endereco = label_endereco.text
     
-    name = xpath_label_name.text
+    name = self.driver.find_element(By.XPATH, xpath_label_name).text
     
     row = 1
     column = 1
