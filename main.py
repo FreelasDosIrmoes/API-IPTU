@@ -5,11 +5,11 @@
 # from app.service import schedule_process
 # from rpa.rpa import Automation
 
-# if __name__ == "__main__":
-#     threading.Thread(target=schedule_process, args=(app_flask,)).start()
-#     app_flask.run(debug=False, port=5001)
+if __name__ == "__main__":
+    #threading.Thread(target=schedule_process, args=(app_flask,)).start()
+    app_flask.run(debug=False, port=5001)
 
-from rpa.rpa import Automation
+# from rpa.rpa import Automation
 
-robot = Automation()
-robot.process_flux_previous_years('48517852', '')
+# robot = Automation()
+# robot.process_flux_previous_years('48517852', '')
