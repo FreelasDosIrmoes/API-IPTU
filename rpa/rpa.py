@@ -23,7 +23,7 @@ class Automation:
 
     self.service = Service()
     self.options = webdriver.ChromeOptions()
-    self.options.add_argument("--headless=new")
+    #self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
@@ -113,7 +113,10 @@ class Automation:
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
-   
+      endereco = label_endereco.text
+    
+    name = xpath_label_name.text
+    
     row = 1
     column = 1
 
@@ -128,7 +131,7 @@ class Automation:
       # caso com menos ou igual a 10 débitos na página
       get_data_table(self.driver, table_data, row, column)
         
-      return table_data, flg_inconsistente   
+      return table_data, flg_inconsistente, name, endereco
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
@@ -138,7 +141,7 @@ class Automation:
         
         click_next_page(self.driver)
         
-      return table_data, flg_inconsistente
+      return table_data, flg_inconsistente, name, endereco
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
