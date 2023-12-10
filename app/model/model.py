@@ -9,6 +9,7 @@ class Iptu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     address = db.Column(db.String(100))
     name = db.Column(db.String(100))
+    send = db.Column(db.Boolean, default=False)
     code = db.Column(db.String(10), unique=True, nullable=False)
     status = db.Column(db.String(20))
     inconsistent = db.Column(db.Boolean, default=False)

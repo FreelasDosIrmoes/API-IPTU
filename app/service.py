@@ -84,7 +84,7 @@ def validate_fields_post(data: dict):
 
 
 def build_iptu_and_dono(data: dict[str]) -> (Iptu, Dono):
-    iptu = Iptu(code=data['code'], name=data['name'], status="WAITING")
+    iptu = Iptu(code=data['code'], name=data['name'], status="WAITING", send= data['send'] if 'send' in data else False)
     dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'], iptu=iptu)
     return iptu, dono
 

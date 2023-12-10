@@ -44,7 +44,11 @@ def save_iptucode():
                 name:
                   type: string
                   description: IPTU name
-                  example: Teste
+                  example: "Teste"
+                send:
+                    type: boolean
+                    description: Send email and wpp
+                    example: true
                 owner:
                   type: object
                   properties:
@@ -59,7 +63,7 @@ def save_iptucode():
                     number:
                       type: string
                       description: Owner number
-                      example: 12345678
+                      example: "5585912345678"
         responses:
           201:
             description: Successful operation
