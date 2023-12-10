@@ -1,7 +1,7 @@
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-from app.service import validate_fields_put
+from app.service import validate_fields_put, send_email_and_wpp, send_only_email, send_only_wpp
 from app.service import validate_fields_post
 from app.service import build_iptu_and_dono
 from app.service import build_request
@@ -28,6 +28,8 @@ def save_iptucode():
     """
         Save IPTU
         ---
+        tags:
+              - IPTU
         parameters:
           - name: data
             in: body
@@ -95,6 +97,8 @@ def update_iptu(iptu_code: str):
     """
      Update IPTU by code
      ---
+     tags:
+              - IPTU
      parameters:
        - name: iptu_code
          in: path
@@ -167,6 +171,8 @@ def get_iptu(iptu_code: str):
     """
         Get IPTU by code
         ---
+        tags:
+              - IPTU
         parameters:
           - name: iptu_code
             in: path
@@ -214,6 +220,9 @@ def delete_iptu(iptu_code: str):
     """
         Delete IPTU by code
         ---
+
+        tags:
+              - IPTU
         parameters:
           - name: iptu_code
             in: path
@@ -247,6 +256,8 @@ def get_pdf(cobranca_id):
     """
         Get PDF for a specific Cobranca
         ---
+        tags:
+              - Cobranças
         parameters:
           - name: cobranca_id
             in: path
@@ -283,6 +294,8 @@ def update_inconsistent(iptu_code):
     """
         Update IPTU inconsistency status by code
         ---
+        tags:
+              - IPTU
         parameters:
           - name: iptu_code
             in: path
@@ -312,3 +325,110 @@ def update_inconsistent(iptu_code):
     except Exception as e:
         raise BadRequest(str(e))
     return make_response({'message': 'IPTU atualizado com sucesso'}), 200
+
+
+@app_flask.route(f"{PATH_DEFAULT}/", methods=['GET'])
+def get_all_iptus():
+    """
+            Retorna todos os registros de IPTU.
+
+            ---
+            tags:
+              - IPTU
+            responses:
+              200:
+                description: Sucesso. Retorna uma lista de objetos IPTU.
+              405:
+                description: Método não permitido. Apenas o método GET é permitido.
+            """
+    if request.method != 'GET':
+        raise MethodNotAllowed
+    iptus = Iptu.query.all()
+    return make_response(jsonify(
+        [{"id": iptu.id,
+          "code": iptu.code,
+          "name": iptu.name,
+          "total": sum([cobranca.total for cobranca in iptu.cobranca]) if iptu.cobranca else 0,
+          "status": iptu.status,
+          "address": iptu.address,
+          "updated_at": iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
+          "inconsistent": iptu.inconsistent,
+          } for iptu in iptus])), 200
+
+
+@app_flask.route(f"{PATH_DEFAULT}/send-wpp/<cobranca_id>", methods=['POST'])
+def send_wpp(cobranca_id):
+    """
+            Envia uma cobrança via WhatsApp.
+
+            ---
+            tags:
+              - Cobranças
+            parameters:
+              - name: cobranca_id
+                in: path
+                type: string
+                required: true
+                description: ID da cobrança.
+            responses:
+              200:
+                description: Sucesso. Retorna um objeto com a mensagem.
+              400:
+                description: Erro. Retorna um objeto com a mensagem de erro.
+            """
+    if request.method != 'POST':
+        raise MethodNotAllowed
+    if cobranca_id is None:
+        return jsonify({'erro': 'Cobrança não encontrada'}), 400
+    cobranca = Cobranca.query.get(cobranca_id)
+
+    if cobranca is None:
+        return jsonify({'erro': 'Cobrança não encontrada'}), 400
+
+    iptu = Iptu.query.get(cobranca.iptu_id)
+
+    if iptu is None:
+        return jsonify({'erro': 'IPTU não encontrado'}), 400
+
+    send_only_wpp(iptu, cobranca, iptu.dono)
+
+    return make_response({'message': 'Email enviado com sucesso'}), 200
+
+
+@app_flask.route(f"{PATH_DEFAULT}/send-email/<cobranca_id>", methods=['POST'])
+def send_email(cobranca_id):
+    """
+            Envia uma cobrança por e-mail.
+
+            ---
+            tags:
+              - Cobranças
+            parameters:
+              - name: cobranca_id
+                in: path
+                type: string
+                required: true
+                description: ID da cobrança.
+            responses:
+              200:
+                description: Sucesso. Retorna um objeto com a mensagem.
+              400:
+                description: Erro. Retorna um objeto com a mensagem de erro.
+            """
+    if request.method != 'POST':
+        raise MethodNotAllowed
+    if cobranca_id is None:
+        return jsonify({'erro': 'Cobrança não encontrada'}), 400
+    cobranca = Cobranca.query.get(cobranca_id)
+
+    if cobranca is None:
+        return jsonify({'erro': 'Cobrança não encontrada'}), 400
+
+    iptu = Iptu.query.get(cobranca.iptu_id)
+
+    if iptu is None:
+        return jsonify({'erro': 'IPTU não encontrado'}), 400
+
+    send_only_email(iptu, cobranca, iptu.dono)
+
+    return make_response({'message': 'Email enviado com sucesso'}), 200

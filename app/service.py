@@ -130,6 +130,8 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
             }
             for cobranca in cobrancas
         ],
+        'address': iptu.address,
+        'total': sum([cobranca.total for cobranca in cobrancas]) if cobrancas else 0,
         'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
     }
 
@@ -205,7 +207,7 @@ def process_iptu(engine, iptu):
             receiver_message = must_send_message_to(connection, iptu.id)
             if not is_inconsistent and len(receiver_message) > 0:
                 cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
-                send_email(iptu, cobrancas, dono)
+                send_email_and_wpp(iptu, cobrancas, dono)
                 sended_message = True
 
             update_iptu(connection, is_inconsistent, iptu.id, sended_message)
@@ -259,7 +261,7 @@ def get_dono_by_iptu(connection, iptu_id: int) -> Dono:
     return result.fetchone()
 
 
-def send_email(iptu, cobrancas, dono):
+def send_email_and_wpp(iptu, cobrancas, dono):
     body = {
         "phone": dono.numero,
         "email": dono.email,
@@ -267,6 +269,33 @@ def send_email(iptu, cobrancas, dono):
     }
 
     response = requests.post(API_MSG, json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+
+def send_only_email(iptu, cobranca, dono):
+    body = {
+        "email": dono.email,
+        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+    }
+
+    response = requests.post(API_MSG+"/email", json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+
+
+def send_only_wpp(iptu, cobranca, dono):
+    body = {
+        "phone": dono.numero,
+        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+    }
+
+    response = requests.post(API_MSG+"/wpp", json=body)
 
     if response.status_code == 200:
         Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
