@@ -23,7 +23,7 @@ class Automation:
 
     self.service = Service()
     self.options = webdriver.ChromeOptions()
-    #self.options.add_argument("--headless=new")
+    self.options.add_argument("--headless=new")
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
@@ -52,7 +52,7 @@ class Automation:
     self.passed_on_captcha()
     if self.click_on_buttom():
       return self.extract_data_web(owner)
-    return None, False
+    return None, False, None, None
 
   def init_browser(self):
     #login no site
@@ -115,7 +115,10 @@ class Automation:
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
       endereco = label_endereco.text
     
-    name = self.driver.find_element(By.XPATH, xpath_label_name).text
+    if check_exists_by_xpath(xpath_label_name, self.driver):
+        label_name = self.driver.find_element(By.XPATH, xpath_label_name)
+        name = label_name.text
+        print(name)
     
     row = 1
     column = 1

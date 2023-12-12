@@ -13,13 +13,13 @@ import base64
 def process_extract_data(iptu: Iptu, dono: Dono):
     start_process = datetime.now()
     robot = Automation()
-    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, iptu.name)
-    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, iptu.name)
+    previous, is_inconsistent_previous, name, address = robot.process_flux_previous_years(iptu.code, iptu.name)
+    current, is_inconsistent_current, name, address = robot.process_flux_current_year(iptu.code, iptu.name)
     finish_process = datetime.now()
     Log().time_all_process(finish_process - start_process)
     previous = previous if previous else []
     current = current if current else []
-    return previous + current, is_inconsistent_current or is_inconsistent_previous
+    return previous + current, is_inconsistent_current or is_inconsistent_previous, name, address
     # with open('mock.txt', 'r') as f:
     #     data = f.read()
     #     return eval(data), False
@@ -205,8 +205,9 @@ def process_iptu(engine, iptu):
             insert_cobrancas(connection, cobrancas)
 
             receiver_message = must_send_message_to(connection, iptu.id)
-            if not is_inconsistent and len(receiver_message) > 0:
-                cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
+            sended_message = False
+            cobrancas_by_iptu = get_all_cobrancas_by_iptu(connection, iptu.id)
+            if not is_inconsistent and len(receiver_message) > 0 and cobrancas_by_iptu:
                 send_email_and_wpp(iptu, cobrancas, dono)
                 sended_message = True
 
@@ -233,15 +234,14 @@ def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message:
         f'''UPDATE iptu SET status = 'DONE', 
                 inconsistent = {is_inconsistent},
                 updated_at = now() {", last_message = now()" if sended_message else ""},
-                address = {address},
-                name = {name}
+                address = '{address if address else 'null'}'
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
 def must_send_message_to(connection, iptu_id) -> list[Iptu]:
     query = text(
-        f'''select * from iptu i where i.id = {iptu_id} and       
-        ( i.last_message is null or extract(day from age(i.last_message))  >= 3 );'''
+        f'''select * from iptu i where i.id = {iptu_id} and 
+	( (i.last_message is null) or (extract(month from i.last_message) <> extract(month from now())));'''
     )
     result = connection.execute(query)
     return result.fetchall()
@@ -267,7 +267,7 @@ def send_email_and_wpp(iptu, cobrancas, dono):
     body = {
         "phone": dono.numero,
         "email": dono.email,
-        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+        "pdf": [base64.b64encode(cobranca[6]).decode('utf-8') for cobranca in cobrancas]
     }
 
     response = requests.post(API_MSG, json=body)

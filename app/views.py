@@ -324,6 +324,7 @@ def update_inconsistent(iptu_code):
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
     iptu.inconsistent = False
+    iptu.status = 'WAITING'
     try:
         db.session.commit()
     except Exception as e:
