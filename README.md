@@ -6,7 +6,6 @@ Esse README fornece um guia passo a passo para configurar e executar a API de IP
 ```bash
 git clone https://github.com/FreelasDosIrmoes/API-IPTU.git
 git clone https://github.com/FreelasDosIrmoes/MsgSender-API.git
-cd API-IPTU
 ```
 
 OU
@@ -14,7 +13,6 @@ OU
 ```bash
 git clone git@github.com:FreelasDosIrmoes/API-IPTU.git
 git clone git@github.com:FreelasDosIrmoes/MsgSender-API.git
-cd API-IPTU
 ```
 
 ## Configuração de Ambiente
@@ -23,12 +21,45 @@ Aqui são as etapas necessárias para configurar e executar o ambiente de desenv
 
 ### Pré-requisitos
 
-- Ter Docker instalado na máquina
+- Ter os pacotes:
+  - python3
+  - python-venv
+- Docker instalado
   
-### Instalação e Execução
+### Instalação e Execução do banco de dados
 ```bash
-docker compose up --build
+docker run -d \
+  --name postgres_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=iptu-db \
+  -e PGDATA=/data/postgres \
+  -v postgres:/data/postgres \
+  -p 5432:5432 \
+  postgres:14-alpine
 ```
+
+### Criação do ambiente virtual e configuração da API-IPTU: 
+```bash
+cd API-IPTU
+python3 -m venv venv
+. venv/bin/active
+pip install -Ur requirements.txt
+python -m flask db migrate
+python -m flask db upgrade
+python main.py
+```
+
+### Criação do ambiente virtual e configuração da API-MSG: 
+```bash
+cd MsgSender-API
+python3 -m venv venv
+. venv/bin/active
+pip install -Ur requirements.txt
+python main.py
+```
+
+
 
 ## Documentação
 ### Após rodar a API siga a instrução abaixo:
