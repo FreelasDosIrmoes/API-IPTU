@@ -277,6 +277,24 @@ def send_email_and_wpp(iptu, cobrancas, dono):
     else:
         Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
 
+def send_email_and_wpp_model(iptu, cobrancas, dono):
+    print("send_email_and_wpp_model")
+    print([cobranca.pdf is None for cobranca in cobrancas])
+    body = {
+        "phone": dono.numero,
+        "email": dono.email,
+        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+    }
+
+    print(body['email'], body['phone'])
+    response = requests.post(API_MSG, json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+
+
 def send_only_email(iptu, cobranca, dono):
     body = {
         "email": dono.email,

@@ -1,5 +1,5 @@
-# Define a imagem base a ser usada, Python 3.11.4 com Debian "buster" slim.
-FROM python:3.11.4-slim-buster
+# Use a imagem oficial do Selenium com o Chrome Headless como base
+FROM selenium/standalone-chrome:latest
 
 # Define o diretório de trabalho no contêiner como "/app".
 WORKDIR /app
@@ -7,22 +7,22 @@ WORKDIR /app
 # Copia todos os arquivos e diretórios do diretório de construção local para o diretório de trabalho no contêiner.
 COPY . .
 
-# Atualiza o cache de pacotes do sistema operacional no contêiner.
+RUN mkdir Downloads
+
+# Instala as dependências do sistema operacional.
+USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl \
-        gcc \
-        g++ \
-        gnupg \
-        unixodbc-dev \
-        libgssapi-krb5-2 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        python3 \
+        python3-pip
 
 # Instala as bibliotecas Python especificadas no arquivo requirements.txt.
 RUN pip install --no-cache-dir --force -r requirements.txt
 
+# Volta para o usuário padrão do Selenium
+
+# Exponha a porta necessária (substitua pela porta correta se for diferente)
 EXPOSE 5001
 
 # Define o comando padrão a ser executado quando o contêiner é iniciado.
-CMD ["python", "-Bu", "main.py"]
+CMD ["python3", "-Bu", "main.py"]

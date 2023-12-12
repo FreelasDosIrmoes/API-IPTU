@@ -1,7 +1,7 @@
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-from app.service import validate_fields_put, send_email_and_wpp, send_only_email, send_only_wpp
+from app.service import validate_fields_put, send_email_and_wpp_model, send_only_email, send_only_wpp
 from app.service import validate_fields_post
 from app.service import build_iptu_and_dono
 from app.service import build_request
@@ -324,11 +324,14 @@ def update_inconsistent(iptu_code):
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
     iptu.inconsistent = False
-    iptu.status = 'WAITING'
     try:
         db.session.commit()
     except Exception as e:
         raise BadRequest(str(e))
+    
+    cobrancas = Cobranca.query.filter_by(iptu=iptu).all()
+    send_email_and_wpp_model(iptu, cobrancas, iptu.dono)
+
     return make_response({'message': 'IPTU atualizado com sucesso'}), 200
 
 

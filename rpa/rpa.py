@@ -118,7 +118,6 @@ class Automation:
     if check_exists_by_xpath(xpath_label_name, self.driver):
         label_name = self.driver.find_element(By.XPATH, xpath_label_name)
         name = label_name.text
-        print(name)
     
     row = 1
     column = 1
