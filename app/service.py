@@ -13,13 +13,13 @@ import base64
 def process_extract_data(iptu: Iptu, dono: Dono):
     start_process = datetime.now()
     robot = Automation()
-    previous, is_inconsistent_previous = robot.process_flux_previous_years(iptu.code, iptu.name)
-    current, is_inconsistent_current = robot.process_flux_current_year(iptu.code, iptu.name)
+    previous, is_inconsistent_previous, name, address = robot.process_flux_previous_years(iptu.code, iptu.name)
+    current, is_inconsistent_current, name, address = robot.process_flux_current_year(iptu.code, iptu.name)
     finish_process = datetime.now()
     Log().time_all_process(finish_process - start_process)
     previous = previous if previous else []
     current = current if current else []
-    return previous + current, is_inconsistent_current or is_inconsistent_previous
+    return previous + current, is_inconsistent_current or is_inconsistent_previous, name, address
     # with open('mock.txt', 'r') as f:
     #     data = f.read()
     #     return eval(data), False
@@ -84,7 +84,7 @@ def validate_fields_post(data: dict):
 
 
 def build_iptu_and_dono(data: dict[str]) -> (Iptu, Dono):
-    iptu = Iptu(code=data['code'], name=data['name'], status="WAITING")
+    iptu = Iptu(code=data['code'], name=data['name'], status="WAITING", send= data['send'] if 'send' in data else False)
     dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'], iptu=iptu)
     return iptu, dono
 
@@ -130,6 +130,8 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
             }
             for cobranca in cobrancas
         ],
+        'address': iptu.address,
+        'total': sum([cobranca.total for cobranca in cobrancas]) if cobrancas else 0,
         'updated_at': iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z')
     }
 
@@ -194,7 +196,7 @@ def process_iptu(engine, iptu):
 
         try:
             dono = get_dono_by_iptu(connection, iptu.id)
-            cobrancas_to, is_inconsistent = process_extract_data(iptu, dono if dono != None or dono != [] else '')
+            cobrancas_to, is_inconsistent, name, address = process_extract_data(iptu, dono if dono != None or dono != [] else '')
 
             delete_existing_cobrancas(connection, iptu)
 
@@ -203,12 +205,13 @@ def process_iptu(engine, iptu):
             insert_cobrancas(connection, cobrancas)
 
             receiver_message = must_send_message_to(connection, iptu.id)
-            if not is_inconsistent and len(receiver_message) > 0:
-                cobrancas = get_all_cobrancas_by_iptu(connection, iptu.id)
-                send_email(iptu, cobrancas, dono)
+            sended_message = False
+            cobrancas_by_iptu = get_all_cobrancas_by_iptu(connection, iptu.id)
+            if not is_inconsistent and len(receiver_message) > 0 and cobrancas_by_iptu:
+                send_email_and_wpp(iptu, cobrancas, dono)
                 sended_message = True
 
-            update_iptu(connection, is_inconsistent, iptu.id, sended_message)
+            update_iptu(connection, is_inconsistent, iptu.id, sended_message, name, address)
 
             transaction.commit()
             connection.close()
@@ -226,18 +229,19 @@ def delete_existing_cobrancas(connection, iptu):
     )
     connection.execute(query)
 
-def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message: bool = False):
+def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message: bool = False, name: str = None, address: str = None):
     query = text(
         f'''UPDATE iptu SET status = 'DONE', 
                 inconsistent = {is_inconsistent},
-                updated_at = now() {", last_message = now()" if sended_message else ""}
+                updated_at = now() {", last_message = now()" if sended_message else ""},
+                address = '{address if address else 'null'}'
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
 def must_send_message_to(connection, iptu_id) -> list[Iptu]:
     query = text(
-        f'''select * from iptu i where i.id = {iptu_id} and       
-        ( i.last_message is null or extract(day from age(i.last_message))  >= 3 );'''
+        f'''select * from iptu i where i.id = {iptu_id} and 
+	( (i.last_message is null) or (extract(month from i.last_message) <> extract(month from now())));'''
     )
     result = connection.execute(query)
     return result.fetchall()
@@ -259,14 +263,41 @@ def get_dono_by_iptu(connection, iptu_id: int) -> Dono:
     return result.fetchone()
 
 
-def send_email(iptu, cobrancas, dono):
+def send_email_and_wpp(iptu, cobrancas, dono):
     body = {
         "phone": dono.numero,
         "email": dono.email,
-        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+        "pdf": [base64.b64encode(cobranca[6]).decode('utf-8') for cobranca in cobrancas]
     }
 
     response = requests.post(API_MSG, json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+
+def send_only_email(iptu, cobranca, dono):
+    body = {
+        "email": dono.email,
+        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+    }
+
+    response = requests.post(API_MSG+"/email", json=body)
+
+    if response.status_code == 200:
+        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
+    else:
+        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+
+
+def send_only_wpp(iptu, cobranca, dono):
+    body = {
+        "phone": dono.numero,
+        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+    }
+
+    response = requests.post(API_MSG+"/wpp", json=body)
 
     if response.status_code == 200:
         Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")

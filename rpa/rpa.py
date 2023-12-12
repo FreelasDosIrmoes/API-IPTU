@@ -52,7 +52,7 @@ class Automation:
     self.passed_on_captcha()
     if self.click_on_buttom():
       return self.extract_data_web(owner)
-    return None, False
+    return None, False, None, None
 
   def init_browser(self):
     #login no site
@@ -113,7 +113,13 @@ class Automation:
 
     if check_exists_by_xpath(xpath_label_endereco, self.driver):
       label_endereco = self.driver.find_element(By.XPATH, xpath_label_endereco)
-   
+      endereco = label_endereco.text
+    
+    if check_exists_by_xpath(xpath_label_name, self.driver):
+        label_name = self.driver.find_element(By.XPATH, xpath_label_name)
+        name = label_name.text
+        print(name)
+    
     row = 1
     column = 1
 
@@ -122,13 +128,13 @@ class Automation:
     qtd_page = self.returning_qtd_page()
 
     if qtd_page is None:
-      return [], False
+      return [], False, None, None
     
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
       get_data_table(self.driver, table_data, row, column)
         
-      return table_data, flg_inconsistente   
+      return table_data, flg_inconsistente, name, endereco
     else:
       # caso com mais de 10 débitos na página
       num = ceil(qtd_page / 10)
@@ -138,7 +144,7 @@ class Automation:
         
         click_next_page(self.driver)
         
-      return table_data, flg_inconsistente
+      return table_data, flg_inconsistente, name, endereco
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB
     # input das infos no site (inscrição e o dropwdown)
