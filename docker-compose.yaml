@@ -1,6 +1,25 @@
 version: "3.8"
 
 services:
+  web_api:
+    container_name: iptu-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    depends_on:
+      - postgres
+      - web_msg
+
+  web_msg:
+    container_name: iptu-msg
+    build:
+      context: ../MsgSender-API/.
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+
 
   postgres:
     container_name: postgres_db

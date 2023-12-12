@@ -7,7 +7,7 @@ from rpa.rpa import Automation
 
 if __name__ == "__main__":
     threading.Thread(target=schedule_process, args=(app_flask,)).start()
-    app_flask.run(debug=False, port=5001)
+    app_flask.run(debug=False, port=5001, host="0.0.0.0")
 
 # from rpa.rpa import Automation
 
