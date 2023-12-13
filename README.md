@@ -45,6 +45,7 @@ cd API-IPTU
 python3 -m venv venv
 . venv/bin/active
 pip install -Ur requirements.txt
+python -m flask db init
 python -m flask db migrate
 python -m flask db upgrade
 python main.py
