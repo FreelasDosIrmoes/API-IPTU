@@ -24,5 +24,10 @@ RUN pip install --no-cache-dir --force -r requirements.txt
 # Exponha a porta necessária (substitua pela porta correta se for diferente)
 EXPOSE 5001
 
+# RUN test -d migrations || flask db init
+
+# RUN flask db migrate
+
+# RUN flask db upgrade
 # Define o comando padrão a ser executado quando o contêiner é iniciado.
-CMD ["python3", "-Bu", "main.py"]
+ENTRYPOINT [ "bash","entrypoint.sh" ]
