@@ -39,6 +39,8 @@ docker run -d \
   postgres:14-alpine
 ```
 
+### Configuração do .env seguindo o .env.template
+
 ### Criação do ambiente virtual e configuração da API-IPTU: 
 ```bash
 cd API-IPTU
