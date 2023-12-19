@@ -105,7 +105,7 @@ def verify_download():
             sleep(0.5)
             return
 
-def verify_data(table_data: list[dict]):
+def verify_data(table_data):
     for data in table_data:
         if "pdf_byte" not in data.keys():
             raise Exception("o dicionário", data, "não possui o campo 'pdf_byte'.")

@@ -10,7 +10,7 @@ from time import sleep
 import requests
 import base64
 
-def process_extract_data(iptu: Iptu, dono: Dono):
+def process_extract_data(iptu, dono):
     start_process = datetime.now()
     robot = Automation()
     previous, is_inconsistent_previous, name, address = robot.process_flux_previous_years(iptu.code, iptu.name)
@@ -25,7 +25,7 @@ def process_extract_data(iptu: Iptu, dono: Dono):
     #     return eval(data), False
 
 
-def create_cobrancas(data: list[dict], iptu: Iptu):
+def create_cobrancas(data, iptu):
     list = []
     for d in data:
         cobranca = dict_to_cobranca(d, iptu)
@@ -33,7 +33,7 @@ def create_cobrancas(data: list[dict], iptu: Iptu):
     return list
 
 
-def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
+def dict_to_cobranca(cobranca_dict, iptu):
     ano = int(cobranca_dict['ano'])
     multa = float(remove_common(cobranca_dict['multa']))
     outros = float(remove_common(cobranca_dict['outros']))
@@ -43,11 +43,11 @@ def dict_to_cobranca(cobranca_dict: dict, iptu: Iptu):
     return (ano, cota, multa, outros, total, iptu, pdf_data)
 
 
-def remove_common(var: str):
+def remove_common(var):
     return var.replace(",", ".")
 
 
-def insert_cobrancas(connection, cobrancas: list[tuple]):
+def insert_cobrancas(connection, cobrancas):
     for cobranca in cobrancas:
         query = text(
             '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf, updated_at)
@@ -66,7 +66,7 @@ def insert_cobrancas(connection, cobrancas: list[tuple]):
                                    "total": cobranca[4], "iptu_id": cobranca[5].id, "pdf": cobranca[6]})
 
 
-def validate_fields_post(data: dict):
+def validate_fields_post(data):
     errors = []
     if 'code' not in data:
         errors.append("Campo 'code' não informado")
@@ -83,13 +83,13 @@ def validate_fields_post(data: dict):
     return len(errors) == 0, errors
 
 
-def build_iptu_and_dono(data: dict[str]) -> (Iptu, Dono):
+def build_iptu_and_dono(data):
     iptu = Iptu(code=data['code'], name=data['name'], status="WAITING", send= data['send'] if 'send' in data else False)
     dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'], iptu=iptu)
     return iptu, dono
 
 
-def validate_fields_put(data: dict):
+def validate_fields_put(data):
     errors = []
     if 'name' not in data:
         errors.append("Campo 'name' não informado")
@@ -106,7 +106,7 @@ def validate_fields_put(data: dict):
     return len(errors) == 0, errors
 
 
-def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
+def build_request(iptu, cobrancas):
     return {
         'id': iptu.id,
         'name': iptu.name,
@@ -136,7 +136,7 @@ def build_request(iptu: Iptu, cobrancas: list[Cobranca]):
     }
 
 
-def get_engine(app_flask) -> Engine:
+def get_engine(app_flask):
     with app_flask.app_context():
         return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'])
 
@@ -229,7 +229,7 @@ def delete_existing_cobrancas(connection, iptu):
     )
     connection.execute(query)
 
-def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message: bool = False, name: str = None, address: str = None):
+def update_iptu(connection, is_inconsistent, iptu_id, sended_message = False, name = None, address = None):
     query = text(
         f'''UPDATE iptu SET status = 'DONE', 
                 inconsistent = {is_inconsistent},
@@ -238,7 +238,7 @@ def update_iptu(connection, is_inconsistent: bool, iptu_id: int, sended_message:
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
-def must_send_message_to(connection, iptu_id) -> list[Iptu]:
+def must_send_message_to(connection, iptu_id):
     query = text(
         f'''select * from iptu i where i.id = {iptu_id} and 
 	( (i.last_message is null) or (extract(month from i.last_message) <> extract(month from now())));'''
@@ -247,7 +247,7 @@ def must_send_message_to(connection, iptu_id) -> list[Iptu]:
     return result.fetchall()
 
 
-def get_all_cobrancas_by_iptu(connection, iptu_id: int) -> list[Cobranca]:
+def get_all_cobrancas_by_iptu(connection, iptu_id):
     query = text(
         f'''select * from cobranca c where c.iptu_id = {iptu_id};'''
     )
@@ -255,7 +255,7 @@ def get_all_cobrancas_by_iptu(connection, iptu_id: int) -> list[Cobranca]:
     return result.fetchall()
 
 
-def get_dono_by_iptu(connection, iptu_id: int) -> Dono:
+def get_dono_by_iptu(connection, iptu_id):
     query = text(
         f'''select * from dono d where d.iptu_id = {iptu_id};'''
     )

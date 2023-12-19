@@ -14,7 +14,7 @@ PATH_DEFAULT = "/api/iptu"
 
 
 @app_flask.errorhandler(HTTPException)
-def handle_exception(e: HTTPException):
+def handle_exception(e):
     return make_response(
         json.dumps({
             "code": e.code,
@@ -97,7 +97,7 @@ def save_iptucode():
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
-def update_iptu(iptu_code: str):
+def update_iptu(iptu_code):
     """
      Update IPTU by code
      ---
@@ -171,7 +171,7 @@ def update_iptu(iptu_code: str):
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
-def get_iptu(iptu_code: str):
+def get_iptu(iptu_code):
     """
         Get IPTU by code
         ---
@@ -220,7 +220,7 @@ def get_iptu(iptu_code: str):
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
-def delete_iptu(iptu_code: str):
+def delete_iptu(iptu_code):
     """
         Delete IPTU by code
         ---
