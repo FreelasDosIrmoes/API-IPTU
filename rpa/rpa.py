@@ -24,6 +24,8 @@ class Automation:
     self.service = Service()
     self.options = webdriver.ChromeOptions()
     self.options.add_argument("--headless=new")
+    self.options.add_argument('--no-sandbox')
+    self.options.add_argument('--disable-dev-shm-usage')
     self.options.add_experimental_option('excludeSwitches', ['enable-logging'])
     self.options.add_argument('--log-level=3')
     self.options.add_argument('--disable-blink-features=AutomationControlled')
@@ -92,7 +94,7 @@ class Automation:
       # g-recaptcha-response
 
       self.driver.execute_script('document.getElementById("g-recaptcha-response").innerHTML = "{}";'.format(g_response))
-      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].B.B.callback('{g_response}')")
+      self.driver.execute_script(f"___grecaptcha_cfg.clients[0].A.A.callback('{g_response}')")
       final_captcha = datetime.now()
       
       Log(self.route).time_captcha(final_captcha-start_captcha)

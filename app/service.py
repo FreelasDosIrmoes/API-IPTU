@@ -234,7 +234,8 @@ def update_iptu(connection, is_inconsistent, iptu_id, sended_message = False, na
         f'''UPDATE iptu SET status = 'DONE', 
                 inconsistent = {is_inconsistent},
                 updated_at = now() {", last_message = now()" if sended_message else ""},
-                address = '{address if address else 'null'}'
+                address = '{address if address else 'NULL'}',
+                name = '{name if name else 'NULL'}'
                 WHERE id = {iptu_id};''')
     connection.execute(query)
 
