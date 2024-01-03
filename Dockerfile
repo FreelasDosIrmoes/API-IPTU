@@ -7,7 +7,7 @@ WORKDIR /app
 # Copia todos os arquivos e diretórios do diretório de construção local para o diretório de trabalho no contêiner.
 COPY . .
 
-RUN mkdir Downloads
+# RUN mkdir Downloads
 
 # Instala as dependências do sistema operacional.
 USER root

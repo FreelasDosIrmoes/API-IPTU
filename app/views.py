@@ -94,6 +94,54 @@ def save_iptucode():
             "numero": dono.numero
         }
     }), 201
+from flask import request
+
+@app_flask.route(f"{PATH_DEFAULT}/list", methods=['GET'])
+def get_iptus_by_list():
+    """
+    Retorna detalhes de registros de IPTU com base em uma lista de códigos.
+    
+    ---
+    tags:
+      - IPTU
+    parameters:
+      - name: iptu_codes
+        in: query
+        type: array
+        items:
+          type: string
+        required: true
+        collectionFormat: multi
+        example: ["12345678", "87654321"]
+    responses:
+      200:
+        description: Sucesso. Retorna uma lista de objetos IPTU.
+      400:
+        description: Erro. Retorna um objeto com a mensagem de erro.
+      405:
+        description: Método não permitido. Apenas o método GET é permitido.
+    """
+    iptu_codes = request.args.getlist("iptu_codes")
+
+    if not iptu_codes:
+        return make_response(jsonify({"error": "Lista de códigos de IPTU não fornecida"}), 400)
+
+    iptus = Iptu.query.filter(Iptu.code.in_(iptu_codes)).all()
+
+    response_data = [
+        {
+            "id": iptu.id,
+            "code": iptu.code,
+            "name": iptu.name,
+            "total": sum([cobranca.total for cobranca in iptu.cobranca]) if iptu.cobranca else 0,
+            "status": iptu.status,
+            "address": iptu.address,
+            "updated_at": iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
+            "inconsistent": iptu.inconsistent,
+        } for iptu in iptus
+    ]
+
+    return make_response(jsonify(response_data), 200)
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['PUT'])
