@@ -9,7 +9,7 @@ from datetime import datetime
 from rpa.rpa import Automation
 from utils.log import Log
 from flasgger import Swagger
-
+from flask_cors import CORS
 
 load_dotenv()
 DB_NAME = os.getenv('DB_NAME')
@@ -27,7 +27,7 @@ app_flask.config['SWAGGER'] = {
 }
 db.init_app(app_flask)
 migrate = Migrate(app_flask, db)
-
+cors = CORS(app_flask, resources={r"/api/*": {"origins": "*"}})
 
 swagger = Swagger(app=app_flask)
 

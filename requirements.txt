@@ -10,3 +10,4 @@ python-dotenv
 Flask-Migrate
 flasgger
 flask_restplus
+flask-cors
