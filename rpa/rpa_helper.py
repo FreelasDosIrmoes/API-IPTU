@@ -38,26 +38,29 @@ def build_dict(dict, col, data):
         if dict['ano'] != ano_atual:
             dict['a_vencer'] = False
         else:
-            if '01' in data:
-                data_cobranca = f'01/05/{ano_atual}'
-            elif '02' in data:
-                data_cobranca = f'01/06/{ano_atual}'
-            elif '03' in data:
-                data_cobranca = f'01/07/{ano_atual}'
-            elif '04' in data:
-                data_cobranca = f'01/08/{ano_atual}'
-            elif '05' in data:
-                data_cobranca = f'01/09/{ano_atual}'
-            elif '06' in data:
-                data_cobranca = f'01/10/{ano_atual}'
+            
+            if tem_numero(data):
                 
-            data_cobranca = datetime.strptime(data_cobranca, '%d/%m/%Y')
-            if data_cobranca <= data_atual:
-                dict['a_vencer'] = False
-            elif data_cobranca > data_atual:
-                dict['a_vencer'] = True
-            else:
-                dict['a_vencer'] = False
+                if '01' in data:
+                    data_cobranca = f'01/05/{ano_atual}'
+                elif '02' in data:
+                    data_cobranca = f'01/06/{ano_atual}'
+                elif '03' in data:
+                    data_cobranca = f'01/07/{ano_atual}'
+                elif '04' in data:
+                    data_cobranca = f'01/08/{ano_atual}'
+                elif '05' in data:
+                    data_cobranca = f'01/09/{ano_atual}'
+                elif '06' in data:
+                    data_cobranca = f'01/10/{ano_atual}'
+                    
+                data_cobranca = datetime.strptime(data_cobranca, '%d/%m/%Y')
+                if data_cobranca <= data_atual:
+                    dict['a_vencer'] = False
+                elif data_cobranca > data_atual:
+                    dict['a_vencer'] = True
+                else:
+                    dict['a_vencer'] = False
         
     elif col == 3:
         dict['valor'] = data
@@ -137,3 +140,10 @@ def click_next_page(driver):
     if check_exists_by_xpath(xpath_next_page, driver):
       label_next_page = driver.find_element(By.XPATH, xpath_next_page)
       label_next_page.click()
+      
+
+def tem_numero(string):
+    for caractere in string:
+        if caractere.isdigit():
+            return True
+    return False
