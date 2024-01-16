@@ -138,7 +138,7 @@ def build_request(iptu, cobrancas):
 
 def get_engine(app_flask):
     with app_flask.app_context():
-        return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'])
+        return create_engine(app_flask.config['SQLALCHEMY_DATABASE_URI'], pool_size=20, max_overflow=0)
 
 
 def query_to_get_iptu_late(engine):
