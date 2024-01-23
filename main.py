@@ -1,4 +1,4 @@
-# import multiprocessing
+import multiprocessing
 import threading
 
 from app import app_flask

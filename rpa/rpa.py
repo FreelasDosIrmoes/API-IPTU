@@ -134,7 +134,9 @@ class Automation:
     if qtd_page <= 10:
       # caso com menos ou igual a 10 débitos na página
       get_data_table(self.driver, table_data, row, column)
-        
+
+      return_correct_elements_in_dict(table_data)
+
       return table_data, flg_inconsistente, name, endereco
     else:
       # caso com mais de 10 débitos na página
@@ -144,7 +146,7 @@ class Automation:
         get_data_table(self.driver, table_data, row, column)
         
         click_next_page(self.driver)
-        
+      
       return table_data, flg_inconsistente, name, endereco
   
   def put_info_web_last_years(self, code):    # TODO BOTAR O OWNER AQUI TB

@@ -73,6 +73,10 @@ def build_dict(dict, col, data):
     elif col == 7:
         dict['total'] = data
 
+def return_correct_elements_in_dict(lista_dicts: list):
+    for element in lista_dicts:
+        if not tem_numero(element['cota']):
+            lista_dicts.remove(element)
 
 def process_pdf(data, driver, row):
     remove_all_relatorio_dar()

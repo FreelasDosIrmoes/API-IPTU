@@ -1,4 +1,5 @@
 from datetime import datetime
+import locale
 from flask import request
 from sqlalchemy.engine import Engine
 from app.model.model import Iptu, Cobranca, Dono
@@ -35,16 +36,19 @@ def create_cobrancas(data, iptu):
 
 def dict_to_cobranca(cobranca_dict, iptu):
     ano = int(cobranca_dict['ano'])
-    multa = float(remove_common(cobranca_dict['multa']))
-    outros = float(remove_common(cobranca_dict['outros']))
-    total = float(remove_common(cobranca_dict['total']))
+    multa = format_number(cobranca_dict['multa'])
+    outros = format_number(cobranca_dict['outros'])
+    total = format_number(cobranca_dict['total'])
     cota = cobranca_dict['cota']
     pdf_data = cobranca_dict['pdf_byte']
     return (ano, cota, multa, outros, total, iptu, pdf_data)
 
 
-def remove_common(var):
-    return var.replace(",", ".")
+def format_number(value):
+    value = value.replace(',', '.')
+    value = value.replace('.', '')
+    value = value[0:len(value)-2] + '.' + value[len(value)-2:len(value)]
+    return float(value)
 
 
 def insert_cobrancas(connection, cobrancas):
@@ -207,7 +211,7 @@ def process_iptu(engine, iptu):
             receiver_message = must_send_message_to(connection, iptu.id)
             sended_message = False
             cobrancas_by_iptu = get_all_cobrancas_by_iptu(connection, iptu.id)
-            if not is_inconsistent and len(receiver_message) > 0 and cobrancas_by_iptu:
+            if iptu.send and not is_inconsistent and len(receiver_message) > 0 and cobrancas_by_iptu:
                 send_email_and_wpp(iptu, cobrancas, dono)
                 sended_message = True
 
