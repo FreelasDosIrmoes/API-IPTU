@@ -231,7 +231,7 @@ def delete_existing_cobrancas(connection, iptu):
 
 def update_iptu(connection, is_inconsistent, iptu_id, sended_message = False, name = None, address = None):
     query = text(
-        f'''UPDATE iptu SET status = 'DONE', 
+        f'''UPDATE iptu SET status = '{'ERROR' if name == None or name == '' else 'DONE'}', 
                 inconsistent = {is_inconsistent},
                 updated_at = now() {", last_message = now()" if sended_message else ""},
                 address = '{address if address else 'NULL'}',
