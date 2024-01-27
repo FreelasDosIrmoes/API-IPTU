@@ -21,9 +21,12 @@ def process_extract_data(iptu, dono):
     previous = previous if previous else []
     current = current if current else []
     return previous + current, is_inconsistent_current or is_inconsistent_previous, name, address
-    # with open('mock.txt', 'r') as f:
-    #     data = f.read()
-    #     return eval(data), False
+
+def contem_cobranca_pendente(iptu : Iptu):
+    for cobranca in iptu.cobranca:
+        if cobranca.status_boleto == "PENDENTE":
+            return True
+    return False
 
 
 def create_cobrancas(data, iptu):
@@ -41,7 +44,8 @@ def dict_to_cobranca(cobranca_dict, iptu):
     total = format_number(cobranca_dict['total'])
     cota = cobranca_dict['cota']
     pdf_data = cobranca_dict['pdf_byte']
-    return (ano, cota, multa, outros, total, iptu, pdf_data)
+    status_boleto = "PENDENTE" if cobranca_dict['a_vencer'] else "PAGO"
+    return (ano, cota, multa, outros, total, iptu, pdf_data, status_boleto)
 
 
 def format_number(value):
@@ -54,7 +58,7 @@ def format_number(value):
 def insert_cobrancas(connection, cobrancas):
     for cobranca in cobrancas:
         query = text(
-            '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf, updated_at)
+            '''INSERT INTO cobranca (ano, cota, multa, outros, total, iptu_id, pdf, status_boleto, updated_at)
             VALUES (
                 :ano,
                 :cota,
@@ -63,11 +67,12 @@ def insert_cobrancas(connection, cobrancas):
                 :total,
                 :iptu_id,
                 :pdf,
+                :status_boleto,
                 now()
                 )'''
         )
         connection.execute(query, {"ano": cobranca[0], "cota": cobranca[1], "multa": cobranca[2], "outros": cobranca[3],
-                                   "total": cobranca[4], "iptu_id": cobranca[5].id, "pdf": cobranca[6]})
+                                   "total": cobranca[4], "iptu_id": cobranca[5].id, "pdf": cobranca[6], "status_boleto": cobranca[7]})
 
 
 def validate_fields_post(data):
@@ -117,6 +122,7 @@ def build_request(iptu, cobrancas):
         'code': iptu.code,
         'status': iptu.status,
         'inconsistent': iptu.inconsistent,
+        'status_payment': 'A VENCER' if contem_cobranca_pendente(iptu) else 'SEM DÉBITOS',
         'dono': {
             'nome': iptu.dono.nome if iptu.dono else None,
             'email': iptu.dono.email if iptu.dono else None,
@@ -130,6 +136,7 @@ def build_request(iptu, cobrancas):
                 'multa': cobranca.multa,
                 'outros': cobranca.outros,
                 'total': cobranca.total,
+                'status_boleto': cobranca.status_boleto,
                 'pdf': f"/api/iptu/pdf/{cobranca.id}" if cobranca.pdf else None
             }
             for cobranca in cobrancas

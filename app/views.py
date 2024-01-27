@@ -1,7 +1,7 @@
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-from app.service import validate_fields_put, send_email_and_wpp_model, send_only_email, send_only_wpp
+from app.service import contem_cobranca_pendente, validate_fields_put, send_email_and_wpp_model, send_only_email, send_only_wpp
 from app.service import validate_fields_post
 from app.service import build_iptu_and_dono
 from app.service import build_request
@@ -138,6 +138,7 @@ def get_iptus_by_list():
             "address": iptu.address,
             "updated_at": iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
             "inconsistent": iptu.inconsistent,
+            "status_payment": "A VENCER" if contem_cobranca_pendente(iptu) else "SEM DÉBITOS",
         } for iptu in iptus
     ]
 
@@ -409,6 +410,7 @@ def get_all_iptus():
           "address": iptu.address,
           "updated_at": iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
           "inconsistent": iptu.inconsistent,
+          "status_payment": "A VENCER" if contem_cobranca_pendente(iptu) else "SEM DÉBITOS",
           } for iptu in iptus])), 200
 
 

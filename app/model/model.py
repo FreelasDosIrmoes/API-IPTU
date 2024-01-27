@@ -37,6 +37,7 @@ class Cobranca(db.Model):
     total = db.Column(db.Float)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
     pdf = db.Column(db.LargeBinary)
+    status_boleto = db.Column(db.String(20))
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     def __eq__(self, other):
