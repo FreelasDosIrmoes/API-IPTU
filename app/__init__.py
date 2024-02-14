@@ -6,8 +6,6 @@ import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from datetime import datetime
-from rpa.rpa import Automation
-from utils.log import Log
 from flasgger import Swagger
 from flask_cors import CORS
 

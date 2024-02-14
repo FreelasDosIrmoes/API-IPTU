@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  web_api:
+  iptu-api:
     container_name: iptu-api
     build:
       context: .
@@ -9,10 +9,10 @@ services:
     ports:
       - "5001:5001"
     depends_on:
-      - postgres
-      - web_msg
+      - iptu-db
+      - iptu-msg
 
-  web_msg:
+  iptu-msg:
     container_name: iptu-msg
     build:
       context: ../MsgSender-API/.
@@ -21,8 +21,8 @@ services:
       - "5000:5000"
 
 
-  postgres:
-    container_name: qualquer_db
+  iptu-db:
+    container_name: iptu-db
     image: postgres:14-alpine
     environment:
       POSTGRES_USER: postgres

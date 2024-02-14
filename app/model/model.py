@@ -21,7 +21,6 @@ class Iptu(db.Model):
 
 class Dono(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100))
     email = db.Column(db.String(100))
     numero = db.Column(db.String(20), nullable=False)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
@@ -36,9 +35,9 @@ class Cobranca(db.Model):
     outros = db.Column(db.Float)
     total = db.Column(db.Float)
     iptu_id = db.Column(db.Integer, ForeignKey('iptu.id'))
-    pdf = db.Column(db.LargeBinary)
+    pdf = db.Column(db.String)
     status_boleto = db.Column(db.String(20))
-    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    updated_at = db.Column(db.DateTime, server_default=func.now())
 
     def __eq__(self, other):
         if not isinstance(other, Cobranca):

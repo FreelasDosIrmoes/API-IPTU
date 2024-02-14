@@ -4,12 +4,72 @@ from flask import request
 from sqlalchemy.engine import Engine
 from app.model.model import Iptu, Cobranca, Dono
 from app import db, API_MSG
-from utils.log import Log
-from rpa.rpa import Automation
 from sqlalchemy import create_engine, text
 from time import sleep
 import requests
+from werkzeug.exceptions import *
 import base64
+
+def criar_iptu_com_api(data):
+    codigo = data['code']
+    response_json_exercicio_1 = pegar_dados_info_api(codigo, "1")
+    dados_iptu = response_json_exercicio_1['data'][0]
+    endereco = dados_iptu['endereco']
+    nome_razao_social = dados_iptu['nome_razao_social']
+
+    
+    iptu = Iptu()
+    iptu.code = codigo
+    iptu.name = nome_razao_social
+    iptu.status = "DONE"
+    iptu.address = endereco
+    iptu.updated_at = datetime.now()
+    iptu.inconsistent = False if nome_razao_social == data['name'] and endereco == data['address'] else True
+    iptu.send = data['send']
+
+    dono = Dono()
+    dono.email = data['owner']['email']
+    dono.numero = data['owner']['number']
+    dono.nome = data['owner']['name']
+    dono.iptu = iptu
+
+    debitos: list = dados_iptu['debitos']
+    response_json_exercicio_2 = pegar_dados_info_api(codigo, "2")
+    debitos += response_json_exercicio_2['data'][0]['debitos'] if response_json_exercicio_2['code'] == 200 else []
+
+    cobrancas = list()
+    for debito in debitos:
+        cobranca = Cobranca()
+        cobranca.ano = debito['ano']
+        cobranca.cota = debito['cota']
+        cobranca.multa = debito['normalizado_multa']
+        cobranca.outros = debito['normalizado_outros']
+        cobranca.total = debito['normalizado_valor_total']
+        cobranca.status_boleto = "VER ISSO"
+        cobranca.iptu = iptu
+        cobranca.updated_at = datetime.now()
+        cobranca.pdf = debito['guia_pdf_url']
+        cobrancas.append(cobranca)
+
+    return iptu, dono, cobrancas
+
+def pegar_dados_info_api(codigo, exercicio):
+    url = 'https://api.infosimples.com/api/v2/consultas/sefaz/df/iptu'
+    args = {
+    "inscricao_imovel": codigo,
+    "exercicio":        exercicio,
+    "token":            "RmqPUVXMZ9x09TbWZRN48fD4ryKog8HS9UUR1CB4",
+    "timeout":          300
+    }
+
+    response = requests.post(url, args)
+    response_json = response.json()
+    response.close()
+
+    if response_json['code'] != 200 and response_json['code'] not in range(600, 799):
+        raise InternalServerError(f"Erro ao buscar dados do IPTU {codigo}. Erro: {response_json['message']}")
+
+    return response_json
 
 def process_extract_data(iptu, dono):
     start_process = datetime.now()

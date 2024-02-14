@@ -1,7 +1,8 @@
+import requests
 import sqlalchemy.exc
 from werkzeug.exceptions import *
 from app import *
-from app.service import contem_cobranca_pendente, validate_fields_put, send_email_and_wpp_model, send_only_email, send_only_wpp
+from app.service import contem_cobranca_pendente, criar_iptu_com_api, validate_fields_put, send_email_and_wpp_model, send_only_email, send_only_wpp
 from app.service import validate_fields_post
 from app.service import build_iptu_and_dono
 from app.service import build_request
@@ -23,7 +24,7 @@ def handle_exception(e):
     )
 
 
-@app_flask.route(f"{PATH_DEFAULT}/", methods=['POST'])
+@app_flask.route(f"{PATH_DEFAULT}", methods=['POST'])
 def save_iptucode():
     """
         Save IPTU
@@ -76,11 +77,15 @@ def save_iptucode():
     if not ok:
         return make_response(jsonify({"erro": err})), 400
 
-    iptu, dono = build_iptu_and_dono(data)
+    if Iptu.query.filter_by(code=data['code']).first() is not None:
+        return jsonify({'erro': 'Código de IPTU já cadastrado'}), 400
+    
+    iptu, dono, cobrancas = criar_iptu_com_api(data)
 
     try:
         db.session.add(iptu)
         db.session.add(dono)
+        [db.session.add(cobranca) for cobranca in cobrancas]
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
         raise BadRequest(e.orig.args[0])
@@ -89,10 +94,7 @@ def save_iptucode():
         "id": iptu.id,
         "code": iptu.code,
         "name": iptu.name,
-        "dono": {
-            "email": dono.email,
-            "numero": dono.numero
-        }
+        "total": sum([cobranca.total for cobranca in iptu.cobranca]) if iptu.cobranca else 0,
     }), 201
 from flask import request
 
@@ -204,10 +206,8 @@ def update_iptu(iptu_code):
     if iptu.dono is not None:
         iptu.dono.email = data['owner']['email']
         iptu.dono.numero = data['owner']['number']
-        iptu.dono.nome = data['owner']['name']
     else:
-        dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], nome=data['owner']['name'],
-                    iptu=iptu)
+        dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], iptu=iptu)
         db.session.add(dono)
     iptu.status = "WAITING"
 
@@ -265,7 +265,29 @@ def get_iptu(iptu_code):
     if iptu is None:
         return jsonify({'erro': 'Codigo de IPTU não encontrado'}), 400
 
-    return make_response(build_request(iptu, cobrancas))
+    return make_response({
+        "id": iptu.id,
+        "code": iptu.code,
+        "name": iptu.name,
+        "total": sum([cobranca.total for cobranca in cobrancas]) if cobrancas else 0,
+        "status": iptu.status,
+        "address": iptu.address,
+        "updated_at": iptu.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
+        "inconsistent": iptu.inconsistent,
+        "status_payment": "A VENCER" if contem_cobranca_pendente(iptu) else "SEM DÉBITOS",
+        "cobrancas": [
+            {
+                "id": cobranca.id,
+                "ano": cobranca.ano,
+                "cota": cobranca.cota,
+                "multa": cobranca.multa,
+                "outros": cobranca.outros,
+                "total": cobranca.total,
+                "pdf": cobranca.pdf,
+                "updated_at": cobranca.updated_at.astimezone().strftime('%d-%m-%Y %H:%M:%S %Z'),
+            } for cobranca in cobrancas
+        ]
+    })
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['DELETE'])
@@ -337,9 +359,8 @@ def get_pdf(cobranca_id):
     cobranca = Cobranca.query.get(cobranca_id)
     if cobranca is None:
         return jsonify({'erro': 'Cobrança não encontrado'}), 400
-    pdf_data = cobranca.pdf
 
-    return pdf_data, 200, {'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename=arquivo.pdf'}
+    return make_response({"url": cobranca.pdf}), 200
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>/inconsistent", methods=['PATCH'])
@@ -384,7 +405,7 @@ def update_inconsistent(iptu_code):
     return make_response({'message': 'IPTU atualizado com sucesso'}), 200
 
 
-@app_flask.route(f"{PATH_DEFAULT}/", methods=['GET'])
+@app_flask.route(f"{PATH_DEFAULT}", methods=['GET'])
 def get_all_iptus():
     """
             Retorna todos os registros de IPTU.
