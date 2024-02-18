@@ -89,12 +89,16 @@ def save_iptucode():
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
         raise BadRequest(e.orig.args[0])
+    
+    if data["send"] is True and iptu.inconsistent is False:
+        send_email_and_wpp_model(iptu, cobrancas, dono)
 
     return make_response({
         "id": iptu.id,
         "code": iptu.code,
         "name": iptu.name,
         "total": sum([cobranca.total for cobranca in iptu.cobranca]) if iptu.cobranca else 0,
+        "a_vencer": contem_cobranca_pendente(iptu),
     }), 201
 from flask import request
 

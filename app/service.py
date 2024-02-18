@@ -8,11 +8,14 @@ from sqlalchemy import create_engine, text
 from time import sleep
 import requests
 from werkzeug.exceptions import *
-import base64
+import re
+from datetime import datetime
 
 def criar_iptu_com_api(data):
     codigo = data['code']
     response_json_exercicio_1 = pegar_dados_info_api(codigo, "1")
+    if response_json_exercicio_1['code'] != 200:
+        raise BadRequest(f"Erro ao buscar dados do IPTU {codigo}. Erro: {response_json_exercicio_1['code_message']}")
     dados_iptu = response_json_exercicio_1['data'][0]
     endereco = dados_iptu['endereco']
     nome_razao_social = dados_iptu['nome_razao_social']
@@ -24,7 +27,7 @@ def criar_iptu_com_api(data):
     iptu.status = "DONE"
     iptu.address = endereco
     iptu.updated_at = datetime.now()
-    iptu.inconsistent = False if nome_razao_social == data['name'] and endereco == data['address'] else True
+    iptu.inconsistent = False if nome_razao_social == data['name'] else True
     iptu.send = data['send']
 
     dono = Dono()
@@ -45,7 +48,7 @@ def criar_iptu_com_api(data):
         cobranca.multa = debito['normalizado_multa']
         cobranca.outros = debito['normalizado_outros']
         cobranca.total = debito['normalizado_valor_total']
-        cobranca.status_boleto = "VER ISSO"
+        # cobranca.status_boleto = calcular_status_cobranca(cobranca)
         cobranca.iptu = iptu
         cobranca.updated_at = datetime.now()
         cobranca.pdf = debito['guia_pdf_url']
@@ -70,6 +73,20 @@ def pegar_dados_info_api(codigo, exercicio):
         raise InternalServerError(f"Erro ao buscar dados do IPTU {codigo}. Erro: {response_json['message']}")
 
     return response_json
+
+def calcular_status_cobranca(cobranca):
+    if bool(re.search(r'\d', cobrancas.cota)):
+        meses = {'01': 5, '02': 6, '03': 7, '04': 8, '05': 9, '06': 10}
+        mes = cobranca.cota[:2]
+        try:
+            data_cobranca = f'01/{meses[mes]}/{cobranca.ano}'
+            data_cobranca = datetime.strptime(data_cobranca, '%d/%m/%Y')
+            if data_cobranca.year == datetime.now().year:
+                cobranca.status_pagamento = 'PENDENTE'
+            else:
+                cobranca.status_pagamento = 'SEM DÉBITOS'
+        except:
+            cobranca.status_pagamento = 'SEM DÉBITOS'
 
 def process_extract_data(iptu, dono):
     start_process = datetime.now()
@@ -290,7 +307,7 @@ def process_iptu(engine, iptu):
         except Exception as e:
             transaction.rollback()
             connection.close()
-            Log().error_msg(e)
+            print(e)
             raise e
 
 
@@ -335,61 +352,36 @@ def get_dono_by_iptu(connection, iptu_id):
     return result.fetchone()
 
 
-def send_email_and_wpp(iptu, cobrancas, dono):
+async def send_email_and_wpp(iptu, cobrancas, dono):
     body = {
         "phone": dono.numero,
         "email": dono.email,
-        "pdf": [base64.b64encode(cobranca[6]).decode('utf-8') for cobranca in cobrancas]
+        "pdf": cobrancas
     }
 
-    response = requests.post(API_MSG, json=body)
+    requests.post(API_MSG, json=body)
 
-    if response.status_code == 200:
-        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
-    else:
-        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
-
-def send_email_and_wpp_model(iptu, cobrancas, dono):
-    print("send_email_and_wpp_model")
-    print([cobranca.pdf is None for cobranca in cobrancas])
+async def send_email_and_wpp_model(iptu, cobrancas, dono):
     body = {
         "phone": dono.numero,
         "email": dono.email,
-        "pdf": [base64.b64encode(cobranca.pdf).decode('utf-8') for cobranca in cobrancas]
+        "pdf": [f'{cobranca.cota}: {cobranca.ano} - R$ {cobranca.total}  |  Link para acessar o boleto: {cobranca.pdf}' for cobranca in cobrancas]
     }
 
-    print(body['email'], body['phone'])
-    response = requests.post(API_MSG, json=body)
+    requests.post(API_MSG, json=body)
 
-    if response.status_code == 200:
-        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
-    else:
-        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
-
-
-def send_only_email(iptu, cobranca, dono):
+async def send_only_email(iptu, cobranca, dono):
     body = {
         "email": dono.email,
-        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+        "pdf": [f'{cobranca.cota}: {cobranca.ano} - R$ {cobranca.total}  |  Link para acessar o boleto: {cobranca.pdf}']
     }
 
-    response = requests.post(API_MSG+"/email", json=body)
+    requests.post(API_MSG+"/email", json=body)
 
-    if response.status_code == 200:
-        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
-    else:
-        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
-
-
-def send_only_wpp(iptu, cobranca, dono):
+async def send_only_wpp(iptu, cobranca, dono):
     body = {
         "phone": dono.numero,
-        "pdf": base64.b64encode(cobranca.pdf).decode('utf-8')
+        "pdf": [f'{cobranca.cota}: {cobranca.ano} - R$ {cobranca.total}  |  Link para acessar o boleto: {cobranca.pdf}']
     }
 
-    response = requests.post(API_MSG+"/wpp", json=body)
-
-    if response.status_code == 200:
-        Log().info_msg(f"Mensagem enviada para o {dono.nome} com sucesso. IPTU: {iptu.code}")
-    else:
-        Log().error_msg(f"Erro ao enviar mensagem para o {dono.nome}. IPTU: {iptu.code}. Erro: {response.text}")
+    requests.post(API_MSG+"/wpp", json=body)
