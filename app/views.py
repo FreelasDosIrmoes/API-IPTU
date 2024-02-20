@@ -473,7 +473,7 @@ def send_wpp(cobranca_id):
     if iptu is None:
         return jsonify({'erro': 'IPTU não encontrado'}), 400
 
-    send_only_wpp(iptu, cobranca, iptu.dono)
+    send_only_wpp(iptu, [cobranca], iptu.dono)
 
     return make_response({'message': 'Email enviado com sucesso'}), 200
 
@@ -512,6 +512,6 @@ def send_email(cobranca_id):
     if iptu is None:
         return jsonify({'erro': 'IPTU não encontrado'}), 400
 
-    send_only_email(iptu, cobranca, iptu.dono)
+    send_only_email(iptu, [cobranca], iptu.dono)
 
     return make_response({'message': 'Email enviado com sucesso'}), 200

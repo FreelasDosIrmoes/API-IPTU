@@ -58,22 +58,22 @@ def criar_iptu_com_api(data):
     return iptu, dono, cobrancas
 
 def pegar_dados_info_api(codigo, exercicio):
-    # url = 'https://api.infosimples.com/api/v2/consultas/sefaz/df/iptu'
-    # args = {
-    # "inscricao_imovel": codigo,
-    # "exercicio":        exercicio,
-    # "token":            "RmqPUVXMZ9x09TbWZRN48fD4ryKog8HS9UUR1CB4",
-    # "timeout":          300
-    # }
+    url = 'https://api.infosimples.com/api/v2/consultas/sefaz/df/iptu'
+    args = {
+    "inscricao_imovel": codigo,
+    "exercicio":        exercicio,
+    "token":            "RmqPUVXMZ9x09TbWZRN48fD4ryKog8HS9UUR1CB4",
+    "timeout":          300
+    }
 
-    # response = requests.post(url, args)
-    # response_json = response.json()
-    # response.close()
+    response = requests.post(url, args)
+    response_json = response.json()
+    response.close()
 
-    # if response_json['code'] != 200 and response_json['code'] not in range(600, 799):
-    #     raise InternalServerError(f"Erro ao buscar dados do IPTU {codigo}. Erro: {response_json['message']}")
+    if response_json['code'] != 200 and response_json['code'] not in range(600, 799):
+        raise InternalServerError(f"Erro ao buscar dados do IPTU {codigo}. Erro: {response_json['message']}")
 
-    return {'code': 200, 'code_message': 'A requisição foi processada com sucesso.', 'header': {'api_version': 'v2', 'api_version_full': '2.2.16-20240216160655', 'product': 'Consultas', 'service': 'sefaz/df/iptu', 'parameters': {'exercicio': 1, 'inscricao_imovel': '48517852'}, 'client_name': 'Arthur Silva Queiroz', 'token_name': 'Arthur Silva Queiroz', 'billable': True, 'price': '0.2', 'requested_at': '2024-02-18T16:21:48.000-03:00', 'elapsed_time_in_milliseconds': 6112, 'remote_ip': '179.67.250.214', 'signature': 'U2FsdGVkX1/fSfJJ0DhHq8XAOlHne0aHqeddvSG8TKxbEt4IMrzBl50CnkmcG2HIh/hKRcDYw1fOA+ucXFKVQQ=='}, 'data_count': 1, 'data': [{'debitos': [{'ano': '2024', 'cota': '00 IPTU / TLP', 'valor': '805,38', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '805,38', 'normalizado_valor_total': 805.38, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 805.38, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162144/r2-J2PjV5kg1BIk39k0CPwvDzY2bYoge/0d53608bf709c0bd3c29975dc4827bfe.pdf'}, {'ano': '2024', 'cota': '01 IPTU / TLP', 'valor': '134,22', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,22', 'normalizado_valor_total': 134.22, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.22, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162144/KpnjB-B7tuO4ykybdxs1GAa2uoz-ARn7/2e1345721a5c785b748f8ecad296706c.pdf'}, {'ano': '2024', 'cota': '02 IPTU / TLP', 'valor': '134,22', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,22', 'normalizado_valor_total': 134.22, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.22, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162145/hcEfafzKUAXN-tIDf3FAc0kmN0EYeJYr/0d6e70f46a576b4621d4c0470283146f.pdf'}, {'ano': '2024', 'cota': '03 IPTU / TLP', 'valor': '134,22', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,22', 'normalizado_valor_total': 134.22, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.22, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162146/m6dkjXZc1rq6VvghB3relfguTV7EXBCv/19e3785bca5dfe6675347e7af086e032.pdf'}, {'ano': '2024', 'cota': '04 IPTU / TLP', 'valor': '134,22', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,22', 'normalizado_valor_total': 134.22, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.22, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162147/FMcKuT_fY_rznLHSsUGs_AjHOpms-X-z/5d85a174b20cb316e81ef86152cf8417.pdf'}, {'ano': '2024', 'cota': '05 IPTU / TLP', 'valor': '134,22', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,22', 'normalizado_valor_total': 134.22, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.22, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162147/H5jPkwsi90xbMPR7KqXm1YGrpZdHZDSb/fbf0bdf0532ec60b88d5cd450adc811a.pdf'}, {'ano': '2024', 'cota': '06 IPTU / TLP', 'valor': '134,28', 'multa': '0,00', 'juros': '0,00', 'outros': '0,00', 'valor_total': '134,28', 'normalizado_valor_total': 134.28, 'normalizado_outros': 0.0, 'normalizado_juros': 0.0, 'normalizado_multa': 0.0, 'normalizado_valor': 134.28, 'guia_pdf_url': 'https://storage.googleapis.com/infosimples-api-tmp/20240218162148/AuCA-35qy384m5eJf37VnRhGsa-zwkEZ/82f8f38cf0547cba7de35bd3458c6d3f.pdf'}], 'endereco': 'SRIA QE 38 BL C AP 104', 'inscricao': '48517852', 'nome_razao_social': 'BRAZILIAN SECURITIES COMPANHIA DE SECURITIZACAO', 'site_receipt': None}], 'errors': [], 'site_receipts': []}
+    return response_json
 
 def calcular_status_cobranca(cobranca):
     if bool(re.search(r'\d', cobrancas.cota)):
