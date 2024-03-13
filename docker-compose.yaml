@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  iptu-api:
+    container_name: iptu-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    depends_on:
+      - iptu-db
+      - iptu-msg
+
+  iptu-msg:
+    container_name: iptu-msg
+    build:
+      context: ../MsgSender-API/.
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+
+
+  iptu-db:
+    container_name: iptu-db
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: iptu-db
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres:
+

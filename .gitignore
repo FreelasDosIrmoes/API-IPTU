@@ -55,3 +55,9 @@ logs/
 # Flask
 instance/
 .webassets-cache
+migrations/
+
+
+.idea
+
+.env
