@@ -211,16 +211,36 @@ def update_iptu(iptu_code):
         iptu.dono.email = data['owner']['email']
         iptu.dono.numero = data['owner']['number']
     else:
-        dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], iptu=iptu)
-        db.session.add(dono)
-    iptu.status = "WAITING"
+      dono = Dono(email=data['owner']['email'], numero=data['owner']['number'], iptu=iptu)
+      db.session.add(dono)
 
-    try:
+    if iptu.code != data['code']:
+      iptu, dono, cobrancas = criar_iptu_com_api(data)
+
+      try:
+        db.session.add(iptu)
+        db.session.add(dono)
+        [db.session.add(cobranca) for cobranca in cobrancas]
         db.session.commit()
-    except Exception as e:
+      except sqlalchemy.exc.IntegrityError as e:
+        raise BadRequest(e.orig.args[0])
+      
+      if data["send"] is True and iptu.inconsistent is False:
+        send_email_and_wpp_model(iptu, cobrancas, dono)
+      iptu.status = "DONE"
+
+      try:
+        db.session.commit()
+      except Exception as e:
         raise BadRequest(str(e))
 
-    return make_response(build_request(iptu, iptu.cobranca)), 200
+    return make_response({
+        "id": iptu.id,
+        "code": iptu.code,
+        "name": iptu.name,
+        "total": sum([cobranca.total for cobranca in iptu.cobranca]) if iptu.cobranca else 0,
+        "a_vencer": contem_cobranca_pendente(iptu),
+    }), 200
 
 
 @app_flask.route(f"{PATH_DEFAULT}/<iptu_code>", methods=['GET'])
